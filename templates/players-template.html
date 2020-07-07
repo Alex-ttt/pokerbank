@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/stylesheets/welcome-template.css">
+
+    <title>Welcome</title>
+</head>
+<body>
+<div class="welcome center">Welcome, it is NOW</div>
+<div class="welcome center">
+    {{ range .Players }}
+    <p> {{ .Name }}</p>
+    {{ end }}
+</div>
+</body>
+</html>
