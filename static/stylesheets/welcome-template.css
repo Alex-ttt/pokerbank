@@ -1,18 +1,11 @@
-body  {
-    min-height:100%;
-    background-image: url("/static/stylesheets/background.jpeg"), linear-gradient(rgba(0,0,0,0.2),rgba(0,0,0,0.3));
-    background-blend-mode: overlay;
-    background-size:cover
+ .main-background {
+     background-image:url('/static/stylesheets/header.jpg');
+ }
+
+.blockquote {
+    color: white;
 }
 
-.welcome {
-    font-family: 'Segoe UI', 'Tahoma', 'Geneva', 'Verdana', 'sans-serif';
-    font-size: 3rem;
+.first-body-row {
+    margin-top: 5em;
 }
-
-.center {
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center
-}​

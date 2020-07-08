@@ -15,9 +15,10 @@ func PlayersPage(writer http.ResponseWriter, _ *http.Request) {
 	var playersVM playersViewModel = playersViewModel{
 		Players: repository.GetAllPlayers(models.Db),
 	}
+	_ = repository.GetPlayersDebts(models.Db)
 
-	templates := template.Must(template.ParseFiles("templates/players-template.html"))
-	if err := templates.ExecuteTemplate(writer, "players-template.html", playersVM); err != nil {
+	templates := template.Must(template.ParseFiles("templates/index.html"))
+	if err := templates.ExecuteTemplate(writer, "index.html", playersVM); err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
