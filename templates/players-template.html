@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/stylesheets/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="/static/stylesheets/welcome-template.css">
-
     <title>Welcome</title>
 </head>
 <body>
@@ -12,6 +12,9 @@
     {{ range .Players }}
     <p> {{ .Name }}</p>
     {{ end }}
+</div>
+<div>
+    <button class="btn-success">Test button</button>
 </div>
 </body>
 </html>
