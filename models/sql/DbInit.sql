@@ -11,6 +11,7 @@ create table poker."Games"
 INSERT INTO poker."Games" ("Id", "Name", "Date") VALUES (1, 'Долги до начала ведения учёта', null);
 INSERT INTO poker."Games" ("Id", "Name", "Date") VALUES (2, 'Игра у Жени Перельмана', '2020-07-03');
 INSERT INTO poker."Games" ("Id", "Name", "Date") VALUES (3, 'Игра у Егора', '2020-07-06');
+INSERT INTO poker."Games" ("Id", "Name", "Date") VALUES (4, 'Игра у Жени', '2020-07-10');
 
 alter table poker."Games" owner to postgres;
 
@@ -60,6 +61,10 @@ INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALU
 INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (9, 5, 2, 1000, 2);
 INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (10, 2, 1, 3750, 3);
 INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (11, 2, 3, 1250, 3);
+INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (12, 4, 3, 4500, 4);
+INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (13, 5, 1, 1150, 4);
+INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (14, 2, 6, 550, 4);
+INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (15, 5, 6, 450, 4);
 
 alter table poker."Debts"
     owner to postgres;
@@ -96,59 +101,65 @@ create function poker.playersdebts()
 as
 $$
 BEGIN
-CREATE temporary table TempDebts AS
-select win."Id"  AS WinnerId,
-       lose."Id" AS LoserId,
-       sum(d."Amount")
-           - coalesce(sum(dp."Amount"), 0)
-           - coalesce(sum(invert_d."Amount"), 0)
-                 as DebtAmount
-from poker."Debts" as d
-         join poker."Players" as p on p."Id" = d."LoserId"
-         left join poker."Debts" as invert_d ON
-            invert_d."WinnerId" = d."LoserId"
-        and invert_d."LoserId" = d."WinnerId"
-         left join poker."DebtPayments" as dp on
-            dp."PayerId" = d."LoserId"
-        and dp."RecipientId" = d."WinnerId"
-         left join poker."Players" as win on win."Id" = d."WinnerId"
-         left join poker."Players" as lose on lose."Id" = d."LoserId"
-group by win."Id", lose."Id"
-having sum(d."Amount")
-           - coalesce(sum(dp."Amount"), 0)
-           - coalesce(sum(invert_d."Amount"), 0)
-           > 0;
+    CREATE temporary table TempDebts AS
+    select win."Id"  AS WinnerId,
+           lose."Id" AS LoserId,
+           sum(d."Amount")
+               - coalesce(sum(invert_d."Amount"), 0)
+                     as DebtAmount
+    from poker."Debts" as d
+             join poker."Players" as p on p."Id" = d."LoserId"
+             left join poker."Debts" as invert_d ON
+                invert_d."WinnerId" = d."LoserId"
+            and invert_d."LoserId" = d."WinnerId"
+             left join poker."Players" as win on win."Id" = d."WinnerId"
+             left join poker."Players" as lose on lose."Id" = d."LoserId"
+    group by win."Id", lose."Id"
+    having sum(d."Amount")
+               - coalesce(sum(invert_d."Amount"), 0)
+               > 0;
 
-return query
-select w."Name" AS WinnerName,
-       l."Name" AS LoserName,
-       cast(source.DebtAmount AS int) AS PlayerWin,
-       cast(sum(source.DebtAmount) OVER (PARTITION BY w."Name") AS int) AS CommonPlayerWin
-from (
-         select debts.WinnerId,
-                debts.LoserId,
-                debts.DebtAmount
-         from TempDebts AS debts
-         union
-         select debts.WinnerId,
-                losers."Id",
-                0
-         from TempDebts as debts
-                  join poker."Players" as losers on losers."Id" not in (
-             select td.LoserId
-             from TempDebts as td
-             where td.WinnerId = debts.WinnerId
-         )
-     ) as source
-         join poker."Players" as w on w."Id" = source.WinnerId
-         join poker."Players" as l on l."Id" = source.LoserId
-    order by w."Name", l."Name";
+    update TempDebts AS temp_debts
+    set DebtAmount = temp_debts.DebtAmount - dp."Amount"
+    from poker."DebtPayments" as dp
+    where dp."PayerId" = temp_debts.LoserId
+      and dp."RecipientId" = temp_debts.WinnerId;
 
-drop table TempDebts;
-return;
+
+    return query
+        select w."Name"                       AS WinnerName,
+               l."Name"                       AS LoserName,
+               cast(source.DebtAmount AS int) AS PlayerWin,
+               cast(
+                               sum(source.DebtAmount) OVER (PARTITION BY w."Name")
+                   AS int
+                   )
+                                              AS CommonPlayerWin
+        from (
+                 select debts.WinnerId,
+                        debts.LoserId,
+                        debts.DebtAmount
+                 from TempDebts AS debts
+                 union
+                 select debts.WinnerId,
+                        losers."Id",
+                        0
+                 from TempDebts as debts
+                          join poker."Players" as losers on losers."Id" not in (
+                     select td.LoserId
+                     from TempDebts as td
+                     where td.WinnerId = debts.WinnerId
+                 )
+             ) as source
+                 join poker."Players" as w on w."Id" = source.WinnerId
+                 join poker."Players" as l on l."Id" = source.LoserId
+        order by w."Name", l."Name";
+
+    drop table TempDebts;
+    return;
 
 END
-    $$;
+$$;
 
 alter function poker.playersdebts() owner to postgres;
 

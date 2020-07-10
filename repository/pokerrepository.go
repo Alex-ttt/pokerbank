@@ -22,7 +22,7 @@ func GetDebtsData(db *sql.DB) *PlayersDebtsViewModel {
 		log.Panic(err)
 	}
 
-	var result PlayersDebtsViewModel = PlayersDebtsViewModel{
+	var result = PlayersDebtsViewModel{
 		Losers:  make([]string, 0, 8),
 		Winners: make([]Winner, 0, 8),
 	}
