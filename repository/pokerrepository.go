@@ -2,80 +2,62 @@ package repository
 
 import (
 	"database/sql"
-	. "pokerscore/models"
+	"log"
 )
 
-func GetAllPlayers(db *sql.DB) []Player {
-	rows, err := db.Query("SELECT Id, Name, Surname FROM players")
-	if err != nil {
-		panic(err)
-	}
-	players := make([]Player, 0, 4)
-	for rows.Next() {
-		var (
-			id            int
-			name, surname string
-		)
-		err = rows.Scan(&id, &name, &surname)
-		if err != nil {
-			panic(err)
-		}
-
-		player := Player{
-			Id:      id,
-			Name:    name,
-			Surname: surname,
-		}
-
-		players = append(players, player)
-	}
-
-	return players
+type Winner struct {
+	Name      string
+	Wins      []int
+	CommonWin int
 }
 
-func GetPlayersDebts(db *sql.DB) []PlayerWins {
-	query := "select " +
-		"\n win.Name as WinnerName, lose.Name as LoserName, " +
-		"\n sum(d.amount) - ifnull(sum(dp.amount), 0) - ifnull(sum(invert_d.amount), 0) as CommonDebt" +
-		"\n from debts as d" +
-		"\n left join debts as invert_d ON invert_d.winnerId = d.loserId and invert_d.loserId = d.winnerId" +
-		"\n left join debtPayments as dp on dp.fromPlayerId = d.loserId and dp.toPlayerId = d.winnerId" +
-		"\n inner join players as win on win.Id = d.winnerId" +
-		"\n inner join players as lose on lose.Id = d.loserId" +
-		"\n group by win.Name, lose.Name" +
-		"\n having CommonDebt > 0 " +
-		"\n order by WinnerName, LoserName"
+type PlayersDebtsViewModel struct {
+	Losers  []string
+	Winners []Winner
+}
 
-	rows, err := db.Query(query)
+func GetDebtsData(db *sql.DB) *PlayersDebtsViewModel {
+	rows, err := db.Query("select * from poker.playersdebts();")
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 
-	playersWins := make([]PlayerWins, 0)
-
-	var currentWinner, currentLoser, previousWinner string
-	var currentAmount int
-
+	var result PlayersDebtsViewModel = PlayersDebtsViewModel{
+		Losers:  make([]string, 0, 8),
+		Winners: make([]Winner, 0, 8),
+	}
+	var previousWinner, winner, loser string
+	var pWin, commonWin int
 	for rows.Next() {
-		err = rows.Scan(&currentWinner, &currentLoser, &currentAmount)
-		if err != nil {
-			panic(err)
-		}
+		_ = rows.Scan(&winner, &loser, &pWin, &commonWin)
 
-		if previousWinner != currentWinner {
-			playersWins = append(playersWins, PlayerWins{
-				PlayerName: currentWinner,
-				Win:        make(map[string]int, 0),
-				Sum:        0,
+		if winner != previousWinner {
+			result.Winners = append(result.Winners, Winner{
+				Name:      winner,
+				Wins:      make([]int, 0, 8),
+				CommonWin: commonWin,
 			})
 		}
-		actualWinnerIndex := len(playersWins) - 1
-		playersWins[actualWinnerIndex].Sum += currentAmount
-		playersWins[actualWinnerIndex].Win[currentLoser] = currentAmount
 
-		previousWinner = currentWinner
+		indexOfCurrentWinner := len(result.Winners) - 1
+		result.Winners[indexOfCurrentWinner].Wins = append(result.Winners[indexOfCurrentWinner].Wins, pWin)
+
+		var losersSlice = &(result.Losers)
+		result.Losers = *(addElementIfItNotContained(losersSlice, loser))
+
+		previousWinner = winner
 	}
 
-	return playersWins
+	return &result
+}
 
+func addElementIfItNotContained(_array *[]string, element string) *[]string {
+	for _, currentEl := range *_array {
+		if currentEl == element {
+			return _array
+		}
+	}
+
+	result := append(*_array, element)
+	return &result
 }
