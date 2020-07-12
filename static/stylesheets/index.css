@@ -9,3 +9,11 @@
 .first-body-row {
     margin-top: 5em;
 }
+
+.debts-table th, td {
+    text-align: center;
+}
+
+.debts-table .header-column {
+    text-align: left;
+}

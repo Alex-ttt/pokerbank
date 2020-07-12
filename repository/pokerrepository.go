@@ -22,9 +22,10 @@ func GetDebtsData(db *sql.DB) *PlayersDebtsViewModel {
 		log.Panic(err)
 	}
 
+	const DefaultSliceCapacity = 8
 	var result = PlayersDebtsViewModel{
-		Losers:  make([]string, 0, 8),
-		Winners: make([]Winner, 0, 8),
+		Losers:  make([]string, 0, DefaultSliceCapacity),
+		Winners: make([]Winner, 0, DefaultSliceCapacity),
 	}
 	var previousWinner, winner, loser string
 	var pWin, commonWin int
@@ -34,7 +35,7 @@ func GetDebtsData(db *sql.DB) *PlayersDebtsViewModel {
 		if winner != previousWinner {
 			result.Winners = append(result.Winners, Winner{
 				Name:      winner,
-				Wins:      make([]int, 0, 8),
+				Wins:      make([]int, 0, DefaultSliceCapacity),
 				CommonWin: commonWin,
 			})
 		}
