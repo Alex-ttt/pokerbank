@@ -8,10 +8,10 @@ import (
 )
 
 func IndexPage(writer http.ResponseWriter, _ *http.Request) {
-	playersDebtsViewModel := *repository.GetDebtsData(models.Db)
+	indexViewModel := repository.GetIndexPageViewModel(models.Db)
 
 	templates := template.Must(template.ParseFiles("templates/index.html"))
-	if err := templates.ExecuteTemplate(writer, "index.html", playersDebtsViewModel); err != nil {
+	if err := templates.ExecuteTemplate(writer, "index.html", indexViewModel); err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}

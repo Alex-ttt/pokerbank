@@ -8,10 +8,11 @@ create table poker."Games" (
 
 alter table poker."Games" owner to postgres;
 
-INSERT INTO poker."Games" ("Id", "Name", "Date") VALUES (1, 'Долги до начала ведения учёта', null);
+INSERT INTO poker."Games" ("Id", "Name", "Date") VALUES (1, 'Банк до начала ведения учёта', null);
 INSERT INTO poker."Games" ("Id", "Name", "Date") VALUES (2, 'Игра у Жени', '2020-07-03');
 INSERT INTO poker."Games" ("Id", "Name", "Date") VALUES (3, 'Игра у Егора', '2020-07-06');
 INSERT INTO poker."Games" ("Id", "Name", "Date") VALUES (4, 'Игра у Жени', '2020-07-10');
+INSERT INTO poker."Games" ("Id", "Name", "Date") VALUES (5, 'Игра у Егора', '2020-07-12');
 
 create table poker."Players" (
     "Id" serial not null constraint players_pk primary key,
@@ -53,6 +54,8 @@ INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALU
 INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (13, 5, 1, 1150, 4);
 INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (14, 2, 6, 550, 4);
 INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (15, 5, 6, 450, 4);
+INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (16, 3, 5, 4250, 5);
+INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (17, 2, 5, 750, 5);
 
 create table poker."DebtPayments" (
     "Id" serial not null constraint debtpayments_pk primary key,
@@ -64,8 +67,10 @@ create table poker."DebtPayments" (
 
 alter table poker."DebtPayments" owner to postgres;
 
-INSERT INTO poker."DebtPayments" ("Id", "PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (1, 6, 5, '2020-07-09 07:55:55.458594', 2000);
-INSERT INTO poker."DebtPayments" ("Id", "PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (2, 3, 2, '2020-07-09 07:55:55.458594', 100);
+INSERT INTO poker."DebtPayments" ("Id", "PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (1, 6, 5, now(), 2000);
+INSERT INTO poker."DebtPayments" ("Id", "PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (2, 3, 2, now(), 100);
+INSERT INTO poker."DebtPayments" ("Id", "PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (3, 5, 2, now(), 5350);
+INSERT INTO poker."DebtPayments" ("Id", "PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (4, 3, 2, now(), 200);
 
 create function poker.playersdebts()
 returns TABLE
@@ -147,7 +152,7 @@ create or replace function poker.gamesinfo()
                 playername character varying,
                 playeramount integer,
                 gamedate date,
-                iswinner bool
+                commongamebank int
             )
     language plpgsql
 as
@@ -159,27 +164,31 @@ BEGIN
             players."Name",
             cast(games_info.Amount as int) as Amount,
             games."Date",
-            games_info.IsWinner
+            coalesce(game_bank.Bank, 0)
         from (
                  select debts."GameId"      as GameId,
                         debts."WinnerId"    as PlayerId,
-                        sum(debts."Amount") as Amount,
-                        cast(1 as bool)      as IsWinner
+                        sum(debts."Amount") as Amount
                  from poker."Debts" as debts
                  group by debts."GameId", debts."WinnerId"
                  union
                  select debts."GameId"      as GameId,
                         debts."LoserId"     as PlayerId,
-                        sum(debts."Amount") as Amount,
-                        cast(0 as bool)      as IsWinner
+                        -sum(debts."Amount") as Amount
                  from poker."Debts" as debts
                  group by debts."GameId", debts."LoserId"
              ) as games_info
                  join poker."Games" as games ON games."Id" = games_info.GameId
+                 left join (
+            select
+                g."GameId" as GameId,
+                cast(sum(g."Amount") as int) as Bank
+            from poker."Debts" as g
+            group by g."GameId"
+        ) as game_bank ON game_bank.GameId = games."Id"
                  join poker."Players" as players ON players."Id" = games_info.PlayerId
         order by
             games."Date" desc nulls last,
-            games_info.IsWinner desc,
             games_info.Amount desc;
 END
 $$;
