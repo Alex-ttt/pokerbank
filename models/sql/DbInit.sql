@@ -8,11 +8,11 @@ create table poker."Games" (
 
 alter table poker."Games" owner to postgres;
 
-INSERT INTO poker."Games" ("Id", "Name", "Date") VALUES (1, 'Банк до начала ведения учёта', null);
-INSERT INTO poker."Games" ("Id", "Name", "Date") VALUES (2, 'Игра у Жени', '2020-07-03');
-INSERT INTO poker."Games" ("Id", "Name", "Date") VALUES (3, 'Игра у Егора', '2020-07-06');
-INSERT INTO poker."Games" ("Id", "Name", "Date") VALUES (4, 'Игра у Жени', '2020-07-10');
-INSERT INTO poker."Games" ("Id", "Name", "Date") VALUES (5, 'Игра у Егора', '2020-07-12');
+INSERT INTO poker."Games" ("Name", "Date") VALUES ('Банк до начала ведения учёта', null);
+INSERT INTO poker."Games" ("Name", "Date") VALUES ('Игра у Жени', '2020-07-03');
+INSERT INTO poker."Games" ("Name", "Date") VALUES ('Игра у Егора', '2020-07-06');
+INSERT INTO poker."Games" ("Name", "Date") VALUES ('Игра у Жени', '2020-07-10');
+INSERT INTO poker."Games" ("Name", "Date") VALUES ('Игра у Егора', '2020-07-12');
 
 create table poker."Players" (
     "Id" serial not null constraint players_pk primary key,
@@ -22,12 +22,12 @@ create table poker."Players" (
 
 alter table poker."Players" owner to postgres;
 
-INSERT INTO poker."Players" ("Id", "Name", "Surname") VALUES (1, 'Егор', 'Смеловский');
-INSERT INTO poker."Players" ("Id", "Name", "Surname") VALUES (2, 'Евгений', 'Перельман');
-INSERT INTO poker."Players" ("Id", "Name", "Surname") VALUES (3, 'Матвей', 'Минеев');
-INSERT INTO poker."Players" ("Id", "Name", "Surname") VALUES (4, 'Александр', 'Тарасенко');
-INSERT INTO poker."Players" ("Id", "Name", "Surname") VALUES (5, 'Роман', 'Огурешнов');
-INSERT INTO poker."Players" ("Id", "Name", "Surname") VALUES (6, 'Алексей', 'Степанов');
+INSERT INTO poker."Players" ("Name", "Surname") VALUES ('Егор', 'Смеловский');
+INSERT INTO poker."Players" ("Name", "Surname") VALUES ('Евгений', 'Перельман');
+INSERT INTO poker."Players" ("Name", "Surname") VALUES ('Матвей', 'Минеев');
+INSERT INTO poker."Players" ("Name", "Surname") VALUES ('Александр', 'Тарасенко');
+INSERT INTO poker."Players" ("Name", "Surname") VALUES ('Роман', 'Огурешнов');
+INSERT INTO poker."Players" ("Name", "Surname") VALUES ('Алексей', 'Степанов');
 
 
 create table poker."Debts" (
@@ -39,23 +39,23 @@ create table poker."Debts" (
 
 alter table poker."Debts" owner to postgres;
 
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (1, 4, 1, 6000, 1);
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (2, 4, 3, 1200, 1);
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (3, 2, 5, 8350, 1);
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (4, 2, 1, 3250, 1);
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (5, 3, 1, 3000, 1);
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (6, 5, 6, 2000, 2);
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (7, 5, 1, 2600, 2);
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (8, 4, 1, 3400, 2);
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (9, 5, 2, 1000, 2);
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (10, 2, 1, 3750, 3);
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (11, 2, 3, 1250, 3);
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (12, 4, 3, 4500, 4);
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (13, 5, 1, 1150, 4);
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (14, 2, 6, 550, 4);
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (15, 5, 6, 450, 4);
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (16, 3, 5, 4250, 5);
-INSERT INTO poker."Debts" ("Id", "WinnerId", "LoserId", "Amount", "GameId") VALUES (17, 2, 5, 750, 5);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (4, 1, 6000, 1);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (4, 3, 1200, 1);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (2, 5, 8350, 1);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (2, 1, 3250, 1);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (3, 1, 3000, 1);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (5, 6, 2000, 2);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (5, 1, 2600, 2);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (4, 1, 3400, 2);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (5, 2, 1000, 2);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (2, 1, 3750, 3);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (2, 3, 1250, 3);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (4, 3, 4500, 4);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (5, 1, 1150, 4);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (2, 6, 550, 4);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (5, 6, 450, 4);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (3, 5, 4250, 5);
+INSERT INTO poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId") VALUES (2, 5, 750, 5);
 
 create table poker."DebtPayments" (
     "Id" serial not null constraint debtpayments_pk primary key,
@@ -67,13 +67,13 @@ create table poker."DebtPayments" (
 
 alter table poker."DebtPayments" owner to postgres;
 
-INSERT INTO poker."DebtPayments" ("Id", "PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (1, 6, 5, now(), 2000);
-INSERT INTO poker."DebtPayments" ("Id", "PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (2, 3, 2, now(), 100);
-INSERT INTO poker."DebtPayments" ("Id", "PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (3, 5, 2, now(), 5350);
-INSERT INTO poker."DebtPayments" ("Id", "PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (4, 3, 2, now(), 200);
+INSERT INTO poker."DebtPayments" ("PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (6, 5, now(), 2000);
+INSERT INTO poker."DebtPayments" ("PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (3, 2, now(), 100);
+INSERT INTO poker."DebtPayments" ("PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (5, 2, now(), 5350);
+INSERT INTO poker."DebtPayments" ("PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (3, 2, now(), 200);
 
 create or replace function poker.playersdebts()
-    returns TABLE(winnername character varying, losername character varying, playerwin integer, commonplayerwin integer)
+    returns TABLE(winnerId int, winnername character varying, losername character varying, playerwin integer, commonplayerwin integer)
     language plpgsql
 as
 $$
@@ -112,6 +112,7 @@ BEGIN
 
     return query
         select
+            w."Id",
             w."Name" AS WinnerName,
             l."Name" AS LoserName,
             cast(source.DebtAmount AS int) AS PlayerWin,
@@ -155,6 +156,7 @@ alter function poker.playersdebts() owner to postgres;
 create or replace function poker.gamesinfo()
     returns TABLE
             (
+                gameid int,
                 gamename character varying,
                 playername character varying,
                 playeramount integer,
@@ -167,6 +169,7 @@ $$
 BEGIN
     return query
         select
+            games."Id",
             games."Name",
             players."Name",
             cast(games_info.Amount as int) as Amount,
@@ -201,3 +204,40 @@ END
 $$;
 
 alter function poker.gamesinfo() owner to postgres;
+
+create type poker.PlayerGameResult AS
+(
+    WinnerId int,
+    LoserId int,
+    Amount int
+);
+
+create function poker.InsertGameResult
+(
+    gameName varchar(40),
+    gameDate date,
+    results poker.PlayerGameResult[]
+)
+    returns void
+    language plpgsql
+AS $$
+declare
+    newGameId int;
+begin
+    insert into poker."Games"("Name", "Date")
+    values (gameName, gameDate)
+    returning "Id" into newGameId;
+
+    insert into poker."Debts" ("WinnerId", "LoserId", "Amount", "GameId")
+    select
+        (game_results.res).WinnerId,
+        (game_results.res).LoserId,
+        (game_results.res).Amount,
+        newGameId
+    from (
+             select unnest(results) as res
+         ) as game_results;
+end;
+$$;
+
+alter function poker.InsertGameResult(gameName varchar, gameDate date, results poker.PlayerGameResult[]) owner to postgres;

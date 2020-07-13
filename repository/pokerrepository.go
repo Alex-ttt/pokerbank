@@ -57,18 +57,18 @@ func GetGamesInfo(db *sql.DB) GameInfoViewModel {
 		Games: make([]Game, 0, 8),
 	}
 	var (
-		gameName, previousGameName, playerName string
-		gameDate                               sql.NullTime
-		amount, gameAmount                     int
-		isOddRow                               = true
+		gameName, playerName                       string
+		gameDate                                   sql.NullTime
+		amount, gameAmount, gameId, previousGameId int
+		isOddRow                                   = true
 	)
 	for rows.Next() {
-		err = rows.Scan(&gameName, &playerName, &amount, &gameDate, &gameAmount)
+		err = rows.Scan(&gameId, &gameName, &playerName, &amount, &gameDate, &gameAmount)
 		if err != nil {
 			log.Panic(err)
 		}
 
-		if gameName != previousGameName {
+		if gameId != previousGameId {
 			result.Games = append(result.Games, Game{
 				Name:           gameName,
 				Date:           gameDate.Time,
@@ -88,7 +88,7 @@ func GetGamesInfo(db *sql.DB) GameInfoViewModel {
 				Amount: amount,
 			})
 
-		previousGameName = gameName
+		previousGameId = gameId
 	}
 
 	return result
@@ -106,13 +106,13 @@ func GetPlayersDebts(db *sql.DB) *PlayersDebtsViewModel {
 			Losers:  make([]string, 0, DefaultSliceCapacity),
 			Winners: make([]Winner, 0, DefaultSliceCapacity),
 		}
-		previousWinner, winner, loser string
-		pWin, commonWin               int
+		winner, loser                               string
+		pWin, commonWin, winnerId, previousWinnerId int
 	)
 	for rows.Next() {
-		_ = rows.Scan(&winner, &loser, &pWin, &commonWin)
+		_ = rows.Scan(&winnerId, &winner, &loser, &pWin, &commonWin)
 
-		if winner != previousWinner {
+		if winnerId != previousWinnerId {
 			result.Winners = append(result.Winners, Winner{
 				Name:      winner,
 				Wins:      make([]int, 0, DefaultSliceCapacity),
@@ -126,7 +126,7 @@ func GetPlayersDebts(db *sql.DB) *PlayersDebtsViewModel {
 		var losersSlice = &(result.Losers)
 		result.Losers = *(addElementIfItNotContained(losersSlice, loser))
 
-		previousWinner = winner
+		previousWinnerId = winnerId
 	}
 
 	return &result
