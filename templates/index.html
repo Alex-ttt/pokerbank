@@ -44,7 +44,7 @@
             <li class="active"><a href="#hero"><i class="bx bx-home"></i> <span>Домой</span></a></li>
             <li><a href="#about"><i class="bx bx-ruble"></i> <span>Долги</span></a></li>
             <li><a href="#resume"><i class="bx bx-game"></i> <span>Игры</span></a></li>
-            <li><a href="#portfolio"><i class="bx bx-book-content"></i> <span>Рейтинг игроков</span></a></li>
+            <li><a href="#portfolio"><i class="bx bx-list-ol"></i> <span>Рейтинг игроков</span></a></li>
             <li><a href="#services"><i class="bx bx-server"></i> <span>Services</span></a></li>
             <li><a href="#contact"><i class="bx bx-envelope"></i> <span>Contact</span></a></li>
         </ul>
@@ -265,7 +265,7 @@
                                 {{ if .IsDateValid }}
                                     <h5>{{ .Date.Format "02.01.2006" }}</h5>
                                 {{ end }}
-                                <p><em>Разыгранный банк {{ .Amount }}</em></p>
+                                <p><em>Разыгранный банк {{ .Amount }}₽</em></p>
                                 <ul>
                                     {{ range .PlayersResults }}
                                         <li>{{.Name}}: {{ if gt .Amount 0 }} +{{ end }}{{.Amount}}</li>
@@ -283,7 +283,7 @@
                                     {{ if .IsDateValid }}
                                         <h5>{{ .Date.Format "02.01.2006" }}</h5>
                                     {{ end }}
-                                    <p><em>Разыгранный банк {{ .Amount }}</em></p>
+                                    <p><em>Разыгранный банк {{ .Amount }}₽</em></p>
                                     <ul>
                                         {{ range .PlayersResults }}
                                             <li>{{.Name}}: {{ if gt .Amount 0 }} +{{ end }}{{.Amount}}</li>

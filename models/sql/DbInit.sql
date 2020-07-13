@@ -72,74 +72,81 @@ INSERT INTO poker."DebtPayments" ("Id", "PayerId", "RecipientId", "InsertStamp",
 INSERT INTO poker."DebtPayments" ("Id", "PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (3, 5, 2, now(), 5350);
 INSERT INTO poker."DebtPayments" ("Id", "PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (4, 3, 2, now(), 200);
 
-create function poker.playersdebts()
-returns TABLE
-    (
-        winnername      character varying,
-        losername       character varying,
-        playerwin       integer,
-        commonplayerwin integer
-    )
-language plpgsql
-as $$
+create or replace function poker.playersdebts()
+    returns TABLE(winnername character varying, losername character varying, playerwin integer, commonplayerwin integer)
+    language plpgsql
+as
+$$
 BEGIN
     CREATE temporary table TempDebts AS
     select
-       winner."Id" as WinnerId,
-       loser."Id" as LoserId,
-       sum(debts."Amount") - coalesce(sum(invert_debts."Amount"), 0) as DebtAmount
-    from poker."Debts" as debts
-      inner join poker."Players" as losers on losers."Id" = debts."LoserId"
-      left join poker."Debts" as invert_debts ON
-        invert_debts."WinnerId" = debts."LoserId"
-        and invert_debts."LoserId" = debts."WinnerId"
-      inner join poker."Players" as winner on winner."Id" = debts."WinnerId"
-      inner join poker."Players" as loser on loser."Id" = debts."LoserId"
-    group by winner."Id", loser."Id"
-    having sum(debts."Amount") - coalesce(sum(invert_debts."Amount"), 0) > 0;
+        win."WinnerId" as WinnerId,
+        win."LoserId" as LoserId,
+        coalesce(win.win, 0) - coalesce(lose.lose, 0) as DebtAmount
+    from poker."Players" as p
+             join (
+        select d."WinnerId", d."LoserId", sum("Amount") as win
+        from poker."Debts" as d
+        group by d."WinnerId", d."LoserId"
+    ) as win on win."WinnerId" = p."Id"
+             left  join (
+        select d."WinnerId", d."LoserId", sum("Amount") as lose
+        from poker."Debts" AS d
+        group by d."WinnerId", d."LoserId"
+    ) as lose on lose."WinnerId" = win."LoserId" and lose."LoserId" = p."Id"
+    where coalesce(win.win, 0) - coalesce(lose.lose, 0) >= 0;
 
     update TempDebts AS temp_debts
-        set DebtAmount = temp_debts.DebtAmount - debt_pay."Amount"
-        from poker."DebtPayments" as debt_pay
-        where
-            debt_pay."PayerId" = temp_debts.LoserId
-            and debt_pay."RecipientId" = temp_debts.WinnerId;
-
+    set DebtAmount = temp_debts.DebtAmount - all_payments.Amount
+    from (
+             select
+                 dp."PayerId",
+                 dp."RecipientId",
+                 sum(dp."Amount") as Amount
+             from poker."DebtPayments" as dp
+             group by  dp."PayerId", dp."RecipientId"
+         ) as all_payments
+    where
+            all_payments."PayerId" = temp_debts.LoserId
+      and all_payments."RecipientId" = temp_debts.WinnerId;
 
     return query
         select
-           w."Name" AS WinnerName,
-           l."Name" AS LoserName,
-           cast(debts.DebtAmount AS int) AS PlayerWin,
-           cast(sum(debts.DebtAmount) OVER (PARTITION BY w."Name") AS int) AS CommonPlayerWin
-        from (
-             select
-                debts.WinnerId,
-                debts.LoserId,
-                debts.DebtAmount
-             from TempDebts as debts
-             union
-             select
-                debts.WinnerId,
-                losers."Id",
-                0
-             from TempDebts as debts
-              join poker."Players" as losers on
-                  losers."Id" not in (
-                     select td.LoserId
-                         from TempDebts as td
-                         where td.WinnerId = debts.WinnerId
-                  ) and exists
-                  (
-                      select * from TempDebts AS td_ where td_.LoserId = losers."Id"
-                  )
-         ) as debts
-         join poker."Players" as w on w."Id" = debts.WinnerId
-         join poker."Players" as l on l."Id" = debts.LoserId
-         order by w."Name", l."Name";
+            w."Name" AS WinnerName,
+            l."Name" AS LoserName,
+            cast(source.DebtAmount AS int) AS PlayerWin,
+            cast(
+                            sum(source.DebtAmount) OVER (PARTITION BY w."Name")
+                AS int
+                )
+                AS CommonPlayerWin
+        from
+            (
+                select
+                    debts.WinnerId,
+                    debts.LoserId,
+                    debts.DebtAmount
+                from TempDebts AS debts
+                union
+                select
+                    debts.WinnerId,
+                    losers."Id",
+                    0
+                from TempDebts as debts
+                         join poker."Players" as losers on losers."Id" not in (
+                    select td.LoserId from TempDebts as td
+                    where td.WinnerId = debts.WinnerId
+                ) and exists(
+                   select * from TempDebts AS td_ where td_.LoserId = losers."Id"
+               )
+            ) as source
+            join poker."Players" as w on w."Id" = source.WinnerId
+            join poker."Players" as l on l."Id" = source.LoserId
+        order by w."Name", l."Name";
 
     drop table TempDebts;
     return;
+
 END
 $$;
 
