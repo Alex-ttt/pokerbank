@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"log"
+	"sort"
 	"time"
 )
 
@@ -53,42 +54,53 @@ func GetGamesInfo(db *sql.DB) GameInfoViewModel {
 		log.Panic(err)
 	}
 
-	result := GameInfoViewModel{
-		Games: make([]Game, 0, 8),
-	}
 	var (
-		gameName, playerName                       string
-		gameDate                                   sql.NullTime
-		amount, gameAmount, gameId, previousGameId int
-		isOddRow                                   = true
+		gameName, playerName       string
+		gameDate                   sql.NullTime
+		amount, gameAmount, gameId int
 	)
+
+	resultMap := make(map[int]*Game, 0)
 	for rows.Next() {
 		err = rows.Scan(&gameId, &gameName, &playerName, &amount, &gameDate, &gameAmount)
 		if err != nil {
 			log.Panic(err)
 		}
 
-		if gameId != previousGameId {
-			result.Games = append(result.Games, Game{
-				Name:           gameName,
-				Date:           gameDate.Time,
-				IsDateValid:    gameDate.Valid,
-				PlayersResults: make([]PlayerGameResult, 0, 8),
-				IsOdd:          isOddRow,
-				Amount:         gameAmount,
-			})
+		game, exists := resultMap[gameId]
+		if !exists {
+			game = new(Game)
+			game.Name = gameName
+			game.Date = gameDate.Time
+			game.IsDateValid = gameDate.Valid
+			game.PlayersResults = make([]PlayerGameResult, 0, 8)
+			game.Amount = gameAmount
 
-			isOddRow = !isOddRow
+			resultMap[gameId] = game
 		}
 
-		indexOfCurrentGame := len(result.Games) - 1
-		result.Games[indexOfCurrentGame].PlayersResults =
-			append(result.Games[indexOfCurrentGame].PlayersResults, PlayerGameResult{
+		game.PlayersResults =
+			append(game.PlayersResults, PlayerGameResult{
 				Name:   playerName,
 				Amount: amount,
 			})
+	}
 
-		previousGameId = gameId
+	result := GameInfoViewModel{
+		Games: make([]Game, 0, len(resultMap)),
+	}
+
+	for _, value := range resultMap {
+		result.Games = append(result.Games, *value)
+	}
+
+	sort.SliceStable(result.Games, func(i, j int) bool {
+		return result.Games[i].Date.After(result.Games[j].Date)
+	})
+	isOdd := true
+	for i := 0; i < len(result.Games); i++ {
+		result.Games[i].IsOdd = isOdd
+		isOdd = !isOdd
 	}
 
 	return result

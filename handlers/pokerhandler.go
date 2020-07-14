@@ -1,12 +1,12 @@
 package handlers
 
 import (
+	"database/sql/driver"
+	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"pokerscore/models"
 	"pokerscore/repository"
-	"strconv"
 )
 
 type PlayerGameResult struct {
@@ -15,38 +15,30 @@ type PlayerGameResult struct {
 	Amount   int
 }
 
-func createPlayerGameResult(pgResult *[]PlayerGameResult) string {
-	var result = "ARRAY["
-	for i, el := range *pgResult {
-		if i > 0 {
-			result = result + ", "
-		}
-		result = result + "(" + strconv.Itoa(el.WinnerId) + ", " + strconv.Itoa(el.LoserId) + ", " + strconv.Itoa(el.Amount) + ")"
-	}
-	result = result + "]"
-	return result
+func (i *PlayerGameResult) Value() (driver.Value, error) {
+	return fmt.Sprintf("(%v, %v, %v)", i.WinnerId, i.LoserId, i.Amount), nil
 }
 
 func IndexPage(writer http.ResponseWriter, _ *http.Request) {
 	indexViewModel := repository.GetIndexPageViewModel(models.Db)
 
-	gameResults := make([]PlayerGameResult, 0, 2)
-	gameResults = append(gameResults, PlayerGameResult{
-		WinnerId: 4,
-		LoserId:  1,
-		Amount:   111,
-	}, PlayerGameResult{
-		WinnerId: 2,
-		LoserId:  1,
-		Amount:   333,
-	})
-	a := createPlayerGameResult(&gameResults)
-	_, _err := models.Db.Exec(
-		"select poker.insertgameresult('Из кода динамически', now()::date," + a + "::poker.playergameresult[])")
+	//gameResults := make([]*PlayerGameResult, 2, 2)
+	//gameResults[0] = new(PlayerGameResult)
+	//gameResults[0].WinnerId = 4
+	//gameResults[0].LoserId = 1
+	//gameResults[0].Amount = 777
+	//gameResults[1] = new(PlayerGameResult)
+	//gameResults[1].WinnerId = 2
+	//gameResults[1].LoserId = 1
+	//gameResults[1].Amount = 444
 
-	if _err != nil {
-		log.Panic(_err)
-	}
+	//_, _err := models.Db.Exec(
+	//	"select poker.insertgameresult('Из кода динамически', now()::date, $1::poker.playergameresult[])",
+	//	pq.Array(gameResults))
+
+	//if _err != nil {
+	//	log.Panic(_err)
+	//}
 	templates := template.Must(template.ParseFiles("templates/index.html"))
 	if err := templates.ExecuteTemplate(writer, "index.html", indexViewModel); err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)

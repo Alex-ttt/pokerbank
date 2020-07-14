@@ -198,6 +198,7 @@ BEGIN
         ) as game_bank ON game_bank.GameId = games."Id"
                  join poker."Players" as players ON players."Id" = games_info.PlayerId
         order by
+            games."Id" desc,
             games."Date" desc nulls last,
             games_info.Amount desc;
 END
