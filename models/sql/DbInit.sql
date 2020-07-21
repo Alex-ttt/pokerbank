@@ -14,6 +14,25 @@ INSERT INTO poker."Games" ("Name", "Date") VALUES ('Игра у Егора', '20
 INSERT INTO poker."Games" ("Name", "Date") VALUES ('Игра у Жени', '2020-07-10');
 INSERT INTO poker."Games" ("Name", "Date") VALUES ('Игра у Егора', '2020-07-12');
 
+create table poker."Offsetting"
+(
+    "Id" serial
+        constraint offsetting_pk
+            primary key,
+    "Recipient" int not null
+        constraint offsetting_players_id_fk
+            references poker."Players",
+    "OldDebtor" int not null
+        constraint offsetting_players_id_fk_2
+            references poker."Players",
+    "NewDebtor" int not null
+        constraint offsetting_players_id_fk_3
+            references poker."Players",
+    "Amount" int not null
+);
+
+alter table poker."Offsetting" owner to postgres;
+
 create table poker."Players" (
     "Id" serial not null constraint players_pk primary key,
     "Name" varchar(20) not null,
@@ -73,42 +92,91 @@ INSERT INTO poker."DebtPayments" ("PayerId", "RecipientId", "InsertStamp", "Amou
 INSERT INTO poker."DebtPayments" ("PayerId", "RecipientId", "InsertStamp", "Amount") VALUES (3, 2, now(), 200);
 
 create or replace function poker.playersdebts()
-    returns TABLE(winnerId int, winnername character varying, losername character varying, playerwin integer, commonplayerwin integer)
+    returns TABLE
+            (
+                winnerId int,
+                winnername character varying,
+                losername character varying,
+                playerwin integer,
+                commonplayerwin integer
+            )
     language plpgsql
 as
 $$
 BEGIN
     CREATE temporary table TempDebts AS
-    select
-        win."WinnerId" as WinnerId,
-        win."LoserId" as LoserId,
-        coalesce(win.win, 0) - coalesce(lose.lose, 0) as DebtAmount
-    from poker."Players" as p
-             join (
-        select d."WinnerId", d."LoserId", sum("Amount") as win
-        from poker."Debts" as d
-        group by d."WinnerId", d."LoserId"
-    ) as win on win."WinnerId" = p."Id"
-             left  join (
-        select d."WinnerId", d."LoserId", sum("Amount") as lose
-        from poker."Debts" AS d
-        group by d."WinnerId", d."LoserId"
-    ) as lose on lose."WinnerId" = win."LoserId" and lose."LoserId" = p."Id"
-    where coalesce(win.win, 0) - coalesce(lose.lose, 0) >= 0;
-
-    update TempDebts AS temp_debts
-    set DebtAmount = temp_debts.DebtAmount - all_payments.Amount
-    from (
-             select
-                 dp."PayerId",
-                 dp."RecipientId",
-                 sum(dp."Amount") as Amount
-             from poker."DebtPayments" as dp
-             group by  dp."PayerId", dp."RecipientId"
-         ) as all_payments
-    where
-            all_payments."PayerId" = temp_debts.LoserId
-      and all_payments."RecipientId" = temp_debts.WinnerId;
+    select * from (
+                      select win."WinnerId"               as WinnerId,
+                             win."LoserId"                as LoserId,
+                             coalesce(win.win, 0) - coalesce(lose.lose, 0)
+                                 - coalesce(payments.DebtPaym, 0) + coalesce(income.DebtPaym, 0)
+                                 - coalesce(offset_from.OffsetAmount, 0) + coalesce(offset_to.OffsetAmount, 0)
+                                 + coalesce(offset_from_invert.OffsetAmount, 0) - coalesce(offset_to_invert.OffsetAmount, 0)
+                                 - coalesce(debt_before_offset.OffsetAmount, 0) + coalesce(debt_before_offset_invert.OffsetAmount, 0) as DebtAmount
+                      from poker."Players" as p
+                               join (
+                          select d."WinnerId", d."LoserId", sum("Amount") as win
+                          from poker."Debts" as d
+                          group by d."WinnerId", d."LoserId"
+                      ) as win on win."WinnerId" = p."Id"
+                               left join (
+                          select d."WinnerId", d."LoserId", sum("Amount") as lose
+                          from poker."Debts" AS d
+                          group by d."WinnerId", d."LoserId"
+                      ) as lose on lose."WinnerId" = win."LoserId" and lose."LoserId" = p."Id"
+                               left join (
+                          select dp."PayerId", dp."RecipientId", sum("Amount") as DebtPaym
+                          from poker."DebtPayments" as dp
+                          group by dp."PayerId", dp."RecipientId"
+                      ) as payments on payments."PayerId" = win."LoserId" AND
+                                       payments."RecipientId" = win."WinnerId"
+                               left join (
+                          select dp."PayerId", dp."RecipientId", sum("Amount") as DebtPaym
+                          from poker."DebtPayments" as dp
+                          group by dp."PayerId", dp."RecipientId"
+                      ) as income on income."PayerId" = win."WinnerId" and income."RecipientId" = win."LoserId"
+                               left join (
+                          select
+                              offset_."Recipient", offset_."OldDebtor", sum(offset_."Amount") as OffsetAmount
+                          from poker."Offsetting" as offset_
+                          group by offset_."Recipient", offset_."OldDebtor"
+                      ) as offset_from on offset_from."Recipient" = win."WinnerId" and
+                                          win."LoserId" = offset_from."OldDebtor"
+                               left join (
+                          select
+                              offset_."Recipient", offset_."OldDebtor", sum(offset_."Amount") as OffsetAmount
+                          from poker."Offsetting" as offset_
+                          group by offset_."Recipient", offset_."OldDebtor"
+                      ) as offset_from_invert on offset_from_invert."Recipient" = win."LoserId" and
+                                                 win."WinnerId" = offset_from_invert."OldDebtor"
+                               left join (
+                          select
+                              offset_."Recipient", offset_."NewDebtor", sum(offset_."Amount") as OffsetAmount
+                          from poker."Offsetting" as offset_
+                          group by offset_."Recipient", offset_."NewDebtor"
+                      ) as offset_to on offset_to."Recipient" = win."WinnerId" and
+                                        win."LoserId" = offset_to."NewDebtor"
+                               left join (
+                          select
+                              offset_."Recipient", offset_."NewDebtor", sum(offset_."Amount") as OffsetAmount
+                          from poker."Offsetting" as offset_
+                          group by offset_."Recipient", offset_."NewDebtor"
+                      ) as offset_to_invert on offset_to."Recipient" = win."LoserId" and
+                                               win."WinnerId" = offset_to."NewDebtor"
+                               left join (
+                          select
+                              offset_."OldDebtor", offset_."NewDebtor", sum(offset_."Amount") as OffsetAmount
+                          from poker."Offsetting" as offset_
+                          group by offset_."OldDebtor", offset_."NewDebtor"
+                      ) as debt_before_offset on debt_before_offset."OldDebtor" = win."WinnerId" and debt_before_offset."NewDebtor" = win."LoserId"
+                               left join (
+                          select
+                              offset_."OldDebtor", offset_."NewDebtor", sum(offset_."Amount") as OffsetAmount
+                          from poker."Offsetting" as offset_
+                          group by offset_."OldDebtor", offset_."NewDebtor"
+                      ) as debt_before_offset_invert on debt_before_offset_invert."OldDebtor" = win."LoserId" and debt_before_offset_invert."NewDebtor" = win."WinnerId"
+                  ) as source
+    where source.DebtAmount > 0;
 
     return query
         select
@@ -138,12 +206,14 @@ BEGIN
                     select td.LoserId from TempDebts as td
                     where td.WinnerId = debts.WinnerId
                 ) and exists(
-                   select * from TempDebts AS td_ where td_.LoserId = losers."Id"
-               )
+                                                                   select * from TempDebts AS td_
+                                                                   where td_.LoserId = losers."Id"
+                                                               )
+
             ) as source
-            join poker."Players" as w on w."Id" = source.WinnerId
-            join poker."Players" as l on l."Id" = source.LoserId
-        order by w."Name", l."Name";
+                join poker."Players" as w on w."Id" = source.WinnerId
+                join poker."Players" as l on l."Id" = source.LoserId
+        order by w."Id", w."Name", l."Name";
 
     drop table TempDebts;
     return;
@@ -152,6 +222,52 @@ END
 $$;
 
 alter function poker.playersdebts() owner to postgres;
+
+create or replace function poker.playerspayments()
+    returns TABLE
+            (
+                Payer character varying,
+                Recipient character varying,
+                Amount int
+            )
+    language plpgsql
+as
+$$
+BEGIN
+    return query
+        select payer."Name", recipient."Name", paym."Amount"
+        from poker."DebtPayments" as paym
+                 join poker."Players" as payer on paym."PayerId" = payer."Id"
+                 join poker."Players" as recipient on recipient."Id" = paym."RecipientId"
+        order by paym."Id" desc;
+END
+$$;
+
+alter function poker.playersdebts() owner to postgres;
+
+create or replace function poker.playersoffsetting()
+    returns TABLE
+            (
+                Recipient character varying,
+                OldDebtor character varying,
+                NewDebtor character varying,
+                Amount int
+            )
+    language plpgsql
+as
+$$
+BEGIN
+    return query
+        select recipient."Name", old_debtor."Name", new_debtor."Name", offseting."Amount"
+        from poker."Offsetting" as offseting
+                 join poker."Players" as recipient on offseting."Recipient" = recipient."Id"
+                 join poker."Players" as old_debtor on offseting."OldDebtor" = old_debtor."Id"
+                 join poker."Players" as new_debtor on offseting."NewDebtor" = new_debtor."Id"
+        order by offseting."Id" desc;
+END
+$$;
+
+alter function poker.playersoffsetting() owner to postgres;
 
 create or replace function poker.gamesinfo()
     returns TABLE

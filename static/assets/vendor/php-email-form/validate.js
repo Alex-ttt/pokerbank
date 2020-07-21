@@ -11,7 +11,7 @@
     
     var f = $(this).find('.form-group'),
       ferror = false,
-      emailExp = /^[^\s()<>@,;:\/]+@\w[\w\.-]+\.[a-z]{2,}$/i;
+      emailExp = /^[^\s()<>@,;:\/]+@\w[\w.-]+\.[a-z]{2,}$/i;
 
     f.children('input').each(function() { // run all inputs
      
@@ -91,7 +91,7 @@
             }
             break;
         }
-        i.next('.validate').html((ierror ? (i.attr('data-msg') != undefined ? i.attr('data-msg') : 'wrong Input') : '')).show('blind');
+        i.next('.validate').html((ierror ? (i.attr('data-msg') !== undefined ? i.attr('data-msg') : 'wrong Input') : '')).show('blind');
       }
     });
     if (ferror) return false;
@@ -129,8 +129,8 @@
       url: action,
       data: data,
       timeout: 40000
-    }).done( function(msg){
-      if (msg == 'OK') {
+    }).done( function(data, textStatus, jqXHR ){
+      if (textStatus === 'success') {
         this_form.find('.loading').slideUp();
         this_form.find('.sent-message').slideDown();
         this_form.find("input:not(input[type=submit]), textarea").val('');

@@ -44,8 +44,8 @@
             <li class="active"><a href="#hero"><i class="bx bx-home"></i> <span>Домой</span></a></li>
             <li><a href="#about"><i class="bx bx-ruble"></i> <span>Долги</span></a></li>
             <li><a href="#resume"><i class="bx bx-game"></i> <span>Игры</span></a></li>
+            <li><a href="#services"><i class="bx bx-repost"></i> <span>Кэшбэк от Покербанка</span></a></li>
             <li><a href="#portfolio"><i class="bx bx-list-ol"></i> <span>Рейтинг игроков</span></a></li>
-{{/*            <li><a href="#services"><i class="bx bx-server"></i> <span>Services</span></a></li>*/}}
 {{/*            <li><a href="#contact"><i class="bx bx-envelope"></i> <span>Contact</span></a></li>*/}}
         </ul>
     </nav><!-- .nav-menu -->
@@ -57,7 +57,7 @@
     <div class="container" data-aos="zoom-in" data-aos-delay="100">
         <h1>ЕГОР, ОТВЕТЬ!</h1>
         <h1>ИГРАТЬ БУДЕШЬ?</h1>
-        <p><span class="typed" data-typed-items="<Читает и не отвечает>, Я не могу говорить, Я пока не знаю, Давайте в кампусе, Я подумаю, Я не выспался, А-ха-хах Жека смешно пошутил, Мне покер разонравился"></span></p>
+        <p><span class="typed" data-typed-items="<Читает и не отвечает>, Я не могу говорить, Я пока не знаю, Я подумаю, Я не выспался, А-ха-хах Жека смешно пошутил, Мне покер разонравился, Я сегодня только в 9 закончил, Может раньше может позже, Может не буду, У меня эфир, Лёха не вдохновляет"></span></p>
 {{/*        <div class="social-links">*/}}
 {{/*            <a href="#" class="twitter"><i class="bx bxl-twitter"></i></a>*/}}
 {{/*            <a href="#" class="facebook"><i class="bx bxl-facebook"></i></a>*/}}
@@ -251,10 +251,10 @@
     <section id="resume" class="resume">
         <div class="container" data-aos="fade-up">
 
-{{/*            <div class="section-title">*/}}
-{{/*                <h2>Игры</h2>*/}}
+            <div class="section-title">
+                <h2>Игры</h2>
 {{/*                <p>Magnam dolores commodi suscipit. Necessitatibus eius consequatur ex aliquid fuga eum quidem. Sit sint consectetur velit. Quisquam quos quisquam cupiditate. Et nemo qui impedit suscipit alias ea. Quia fugiat sit in iste officiis commodi quidem hic quas.</p>*/}}
-{{/*            </div>*/}}
+            </div>
 
             <div class="row">
                 <div class="col-lg-6">
@@ -265,7 +265,7 @@
                                 {{ if .IsDateValid }}
                                     <h5>{{ .Date.Format "02.01.2006" }}</h5>
                                 {{ end }}
-                                <p><em>Разыгранный банк {{ .Amount }}₽</em></p>
+                                <p><em>Разыгранный банк {{ .Amount }}<span class="ruble-icon">₽</span></em></p>
                                 <ul>
                                     {{ range .PlayersResults }}
                                         <li>{{.Name}}: {{ if gt .Amount 0 }} +{{ end }}{{.Amount}}</li>
@@ -283,7 +283,7 @@
                                     {{ if .IsDateValid }}
                                         <h5>{{ .Date.Format "02.01.2006" }}</h5>
                                     {{ end }}
-                                    <p><em>Разыгранный банк {{ .Amount }}₽</em></p>
+                                    <p><em>Разыгранный банк {{ .Amount }}<span class="ruble-icon">₽</span></em></p>
                                     <ul>
                                         {{ range .PlayersResults }}
                                             <li>{{.Name}}: {{ if gt .Amount 0 }} +{{ end }}{{.Amount}}</li>
@@ -313,13 +313,103 @@
         </div>
     </section><!-- End Resume Section -->
 
+    <section id="services" class="services">
+            <div class="container" data-aos="fade-up">
+
+                <div class="section-title">
+                    <h2>Кэшбэк от Покербанка</h2>
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <p class="text-justify">
+                                <b>Долг</b> платежом красен.
+                                <b>Долги</b> помнит не тот, кто берет, а кто дает.
+                                В <b>долгу</b>, что в репьях.
+                                У <b>долга</b> и век <b>долог</b>.
+                                <b>Долг</b> не велик, да лежать не велит.
+                                Хоть там, хоть сям перехвати, а что <b>должен</b>, заплати.
+                                Лучше уплачивать <b>долги</b>, чем делать новые.
+                                <b>Долго</b> спать — <b>долг</b> наспать. В <b>долгу</b>, как в шелку.
+                                <b>Долг</b> не ждет завещания.
+                                Ветераны Чернобыля, вступайте в ряды <b>Долга</b>.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-4 offset-lg-8 mt-0">
+                            <p class="text-lg-left font-italic">
+                                — Это любовь?<br/>
+                                — В любовь играют дети, а я <s>у него в долгу</s> играю в покер.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row mt-5">
+                        <div class="col-lg-5">
+                            <h3>Оплата долгов</h3>
+                            <div class="table-responsive-lg">
+                                <table class="table table-hover">
+                                <thead>
+                                <tr>
+                                    <th scope="col" class="header-column">#</th>
+                                    <th scope="col">Заплатил</th>
+                                    <th scope="col">Получил</th>
+                                    <th scope="col">Сумма</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {{ range $i, $elem := .Payments.Payments}}
+                                    <tr>
+                                        <th scope="row" class="header-column">{{ add $i 1 }}</th>
+                                        <td>{{ .Payer}}</td>
+                                        <td>{{ .Recipient }}</td>
+                                        <td>{{ .Amount }}</td>
+                                    </tr>
+                                {{end}}
+                                </tbody>
+                            </table>
+                            </div>
+                        </div>
+                        <div class="col-lg-5 offset-lg-1">
+                            <h3>Взаимозачёты</h3>
+                            <div class="table-responsive-lg">
+                                <table class="table table-hover">
+                                    <thead>
+                                    <tr>
+                                        <th scope="col" class="header-column">#</th>
+                                        <th scope="col">Получатель</th>
+                                        <th scope="col">Долг списан</th>
+                                        <th scope="col">Долг добавлен</th>
+                                        <th scope="col">Сумма</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {{ range $i, $elem := .Offsetting.Offsets }}
+                                        <tr>
+                                            <th scope="row" class="header-column">{{ add $i 1 }}</th>
+                                            <td>{{ .Recipient}}</td>
+                                            <td>{{ .OldDebtor }}</td>
+                                            <td>{{ .NewDebtor }}</td>
+                                            <td>{{ .Amount }}</td>
+                                        </tr>
+                                    {{end}}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                </div>
+            </div>
+        </section>
+
     <!-- ======= Portfolio Section ======= -->
     <section id="portfolio" class="portfolio section-bg">
         <div class="container" data-aos="fade-up">
 
             <div class="section-title">
                 <h2>Топ 100 игроков клуба</h2>
-                <p>Только лучшие из лучших попадают в этот список. Каждое место в нём заслужено кровью <s>и вином</s>, потом (пóтом), бессонными ночами, проигранным скитлзом. Только тот, кто готов пойти ва-банк на Дама - Три и победить Фулл хаус, достоин находиться здесь</p>
+                <p>Только лучшие из лучших попадают в этот список. Каждое место в нём заслужено кровью <s>и вином</s>, потом (пóтом), бессонными ночами, проигранным скитлзом. Только тот, кто готов пойти ва-банк на Дама - Четыре и победить Фулл хаус, достоин находиться здесь</p>
             </div>
 
             <div class="row">
@@ -340,9 +430,9 @@
                         <div class="portfolio-info">
                             <h4>Егор</h4>
                             <p>Жак-Ив</p>
-{{/*                            <div class="portfolio-links">*/}}
-{{/*                                <a href="/static/assets/img/people/smelovskiy.jpg" data-gall="portfolioGallery" class="venobox" title="App 1"><i class="bx bx-plus"></i></a>*/}}
-{{/*                            </div>*/}}
+                            {{/*                            <div class="portfolio-links">*/}}
+                            {{/*                                <a href="/static/assets/img/people/smelovskiy.jpg" data-gall="portfolioGallery" class="venobox" title="App 1"><i class="bx bx-plus"></i></a>*/}}
+                            {{/*                            </div>*/}}
                         </div>
                     </div>
                 </div>
@@ -353,9 +443,9 @@
                         <div class="portfolio-info">
                             <h4>Матвей</h4>
                             <p>Из племя Команчи</p>
-{{/*                            <div class="portfolio-links">*/}}
-{{/*                                <a href="/static/assets/img/people/mineev.jpg" data-gall="portfolioGallery" class="venobox" title="Web 3"><i class="bx bx-plus"></i></a>*/}}
-{{/*                            </div>*/}}
+                            {{/*                            <div class="portfolio-links">*/}}
+                            {{/*                                <a href="/static/assets/img/people/mineev.jpg" data-gall="portfolioGallery" class="venobox" title="Web 3"><i class="bx bx-plus"></i></a>*/}}
+                            {{/*                            </div>*/}}
                         </div>
                     </div>
                 </div>
@@ -366,10 +456,10 @@
                         <div class="portfolio-info">
                             <h4>Евгений</h4>
                             <p>Мужик</p>
-{{/*                            <p>App</p>*/}}
-{{/*                            <div class="portfolio-links">*/}}
-{{/*                                <a href="/static/assets/img/people/perelman.jpg" data-gall="portfolioGallery" class="venobox" title="App 2"><i class="bx bx-plus"></i></a>*/}}
-{{/*                            </div>*/}}
+                            {{/*                            <p>App</p>*/}}
+                            {{/*                            <div class="portfolio-links">*/}}
+                            {{/*                                <a href="/static/assets/img/people/perelman.jpg" data-gall="portfolioGallery" class="venobox" title="App 2"><i class="bx bx-plus"></i></a>*/}}
+                            {{/*                            </div>*/}}
                         </div>
                     </div>
                 </div>
@@ -380,10 +470,10 @@
                         <div class="portfolio-info">
                             <h4>Александр</h4>
                             <p>Девелопер</p>
-{{/*                            <p>Card</p>*/}}
-{{/*                            <div class="portfolio-links">*/}}
-{{/*                                <a href="/static/assets/img/people/tarasenko.jpg" data-gall="portfolioGallery" class="venobox" title="Card 2"><i class="bx bx-plus"></i></a>*/}}
-{{/*                            </div>*/}}
+                            {{/*                            <p>Card</p>*/}}
+                            {{/*                            <div class="portfolio-links">*/}}
+                            {{/*                                <a href="/static/assets/img/people/tarasenko.jpg" data-gall="portfolioGallery" class="venobox" title="Card 2"><i class="bx bx-plus"></i></a>*/}}
+                            {{/*                            </div>*/}}
                         </div>
                     </div>
                 </div>
@@ -394,10 +484,10 @@
                         <div class="portfolio-info">
                             <h4>Роман</h4>
                             <p>Поц</p>
-{{/*                            <p>Web</p>*/}}
-{{/*                            <div class="portfolio-links">*/}}
-{{/*                                <a href="/static/assets/img/people/orureshnov.jpg" data-gall="portfolioGallery" class="venobox" title="Web 2"><i class="bx bx-plus"></i></a>*/}}
-{{/*                            </div>*/}}
+                            {{/*                            <p>Web</p>*/}}
+                            {{/*                            <div class="portfolio-links">*/}}
+                            {{/*                                <a href="/static/assets/img/people/orureshnov.jpg" data-gall="portfolioGallery" class="venobox" title="Web 2"><i class="bx bx-plus"></i></a>*/}}
+                            {{/*                            </div>*/}}
                         </div>
                     </div>
                 </div>
@@ -408,9 +498,9 @@
                         <div class="portfolio-info">
                             <h4>Алексей</h4>
                             <p>Циклоп</p>
-{{/*                            <div class="portfolio-links">*/}}
-{{/*                                <a href="/static/assets/img/people/stepanov.jpg" data-gall="portfolioGallery" class="venobox" title="App 3"><i class="bx bx-plus"></i></a>*/}}
-{{/*                            </div>*/}}
+                            {{/*                            <div class="portfolio-links">*/}}
+                            {{/*                                <a href="/static/assets/img/people/stepanov.jpg" data-gall="portfolioGallery" class="venobox" title="App 3"><i class="bx bx-plus"></i></a>*/}}
+                            {{/*                            </div>*/}}
                         </div>
                     </div>
                 </div>
@@ -584,7 +674,7 @@
 {{/*        </div>*/}}
 {{/*    </section><!-- End Testimonials Section -->*/}}
 
-{{/*    <!-- ======= Contact Section ======= -->*/}}
+    <!-- ======= Contact Section ======= -->
 {{/*    <section id="contact" class="contact">*/}}
 {{/*        <div class="container" data-aos="fade-up">*/}}
 
@@ -618,6 +708,37 @@
 {{/*                </div>*/}}
 {{/*            </div>*/}}
 
+{{/*            <div class="col-lg-6 mt-5 mt-lg-0">*/}}
+
+{{/*                <form action="/" method="POST" role="form" class="php-email-form">*/}}
+{{/*                    <div class="form-row">*/}}
+{{/*                        <div class="col-md-6 form-group">*/}}
+{{/*                            <input type="text" name="name" class="form-control" id="name" placeholder="Your Name" data-rule="minlen:4" data-msg="Please enter at least 4 chars" />*/}}
+{{/*                            <div class="validate"></div>*/}}
+{{/*                        </div>*/}}
+{{/*                        <div class="col-md-6 form-group">*/}}
+{{/*                            <input type="email" class="form-control" name="email" id="email" placeholder="Your Email" data-rule="email" data-msg="Please enter a valid email" />*/}}
+{{/*                            <div class="validate"></div>*/}}
+{{/*                        </div>*/}}
+{{/*                    </div>*/}}
+{{/*                    <div class="form-group">*/}}
+{{/*                        <input type="text" class="form-control" name="subject" id="subject" placeholder="Subject" data-rule="minlen:4" data-msg="Please enter at least 8 chars of subject" />*/}}
+{{/*                        <div class="validate"></div>*/}}
+{{/*                    </div>*/}}
+{{/*                    <div class="form-group">*/}}
+{{/*                        <textarea class="form-control" name="message" rows="5" data-rule="required" data-msg="Please write something for us" placeholder="Message"></textarea>*/}}
+{{/*                        <div class="validate"></div>*/}}
+{{/*                    </div>*/}}
+{{/*                    <div class="mb-3">*/}}
+{{/*                        <div class="loading">Loading</div>*/}}
+{{/*                        <div class="error-message"></div>*/}}
+{{/*                        <div class="sent-message">Your message has been sent. Thank you!</div>*/}}
+{{/*                    </div>*/}}
+{{/*                    <div class="text-center"><button type="submit">Send Message</button></div>*/}}
+{{/*                </form>*/}}
+
+{{/*            </div>*/}}
+
 {{/*        </div>*/}}
 {{/*    </section><!-- End Contact Section -->*/}}
 
@@ -638,7 +759,7 @@
             &copy; Copyright <strong><span>Покерный банк</span></strong>. Владивосток
         </div>
         <div class="credits">
-            <!-- All the links in the footer should remain intact. -->k
+            <!-- All the links in the footer should remain intact. -->
             <!-- You can delete the links only if you purchased the pro version. -->
             <!-- Licensing information: [license-url] -->
             <!-- Purchase the pro version with working PHP/AJAX contact form: https://bootstrapmade.com/free-html-bootstrap-template-my-resume/ -->

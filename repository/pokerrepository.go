@@ -37,15 +37,97 @@ type GameInfoViewModel struct {
 }
 
 type IndexPageViewModel struct {
-	Games GameInfoViewModel
-	Debts PlayersDebtsViewModel
+	Games      GameInfoViewModel
+	Debts      PlayersDebtsViewModel
+	Payments   PaymentsViewModel
+	Offsetting OffsettingViewModel
+}
+
+type Payment struct {
+	Payer     string
+	Recipient string
+	Amount    int
+}
+
+type PaymentsViewModel struct {
+	Payments []Payment
+}
+
+type Offsetting struct {
+	Recipient string
+	OldDebtor string
+	NewDebtor string
+	Amount    int
+}
+
+type OffsettingViewModel struct {
+	Offsets []Offsetting
 }
 
 func GetIndexPageViewModel(db *sql.DB) IndexPageViewModel {
 	return IndexPageViewModel{
-		Games: GetGamesInfo(db),
-		Debts: *GetPlayersDebts(db),
+		Games:      GetGamesInfo(db),
+		Debts:      *GetPlayersDebts(db),
+		Payments:   GetPlayersPayments(db),
+		Offsetting: GetOffsetting(db),
 	}
+}
+
+func GetOffsetting(db *sql.DB) OffsettingViewModel {
+	rows, err := db.Query("select * from poker.playersoffsetting();")
+	if err != nil {
+		log.Panic(err)
+	}
+
+	var (
+		recipient, oldDebtor, newDebtor string
+		amount                          int
+	)
+	result := OffsettingViewModel{Offsets: make([]Offsetting, 0, 8)}
+
+	for rows.Next() {
+		err = rows.Scan(&recipient, &oldDebtor, &newDebtor, &amount)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		result.Offsets = append(result.Offsets, Offsetting{
+			Recipient: recipient,
+			OldDebtor: oldDebtor,
+			NewDebtor: newDebtor,
+			Amount:    amount,
+		})
+	}
+
+	return result
+}
+
+func GetPlayersPayments(db *sql.DB) PaymentsViewModel {
+	rows, err := db.Query("select * from poker.playerspayments();")
+	if err != nil {
+		log.Panic(err)
+	}
+
+	var (
+		payer, recipient string
+		amount           int
+	)
+	result := PaymentsViewModel{Payments: make([]Payment, 0, 8)}
+	for rows.Next() {
+		err = rows.Scan(&payer, &recipient, &amount)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		result.Payments = append(result.Payments, Payment{
+			Payer:     payer,
+			Recipient: recipient,
+			Amount:    amount,
+		})
+
+	}
+
+	return result
 }
 
 func GetGamesInfo(db *sql.DB) GameInfoViewModel {
@@ -140,6 +222,10 @@ func GetPlayersDebts(db *sql.DB) *PlayersDebtsViewModel {
 
 		previousWinnerId = winnerId
 	}
+
+	sort.SliceStable(result.Winners, func(i, j int) bool {
+		return result.Winners[i].Name < result.Winners[j].Name
+	})
 
 	return &result
 }
