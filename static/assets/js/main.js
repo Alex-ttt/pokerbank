@@ -3,8 +3,9 @@
 
   // Preloader
   $(window).on('load', function() {
-    if ($('#preloader').length) {
-      $('#preloader').delay(100).fadeOut('slow', function() {
+    var preloader = $('#preloader');
+    if (preloader.length) {
+      preloader.delay(100).fadeOut('slow', function() {
         $(this).remove();
       });
     }
@@ -41,8 +42,9 @@
           $(this).closest('li').addClass('active');
         }
 
-        if ($('body').hasClass('mobile-nav-active')) {
-          $('body').removeClass('mobile-nav-active');
+        var body = $('body');
+        if (body.hasClass('mobile-nav-active')) {
+          body.removeClass('mobile-nav-active');
           $('.mobile-nav-toggle i').toggleClass('icofont-navigation-menu icofont-close');
         }
         return false;
@@ -71,8 +73,9 @@
   $(document).click(function(e) {
     var container = $(".mobile-nav-toggle");
     if (!container.is(e.target) && container.has(e.target).length === 0) {
-      if ($('body').hasClass('mobile-nav-active')) {
-        $('body').removeClass('mobile-nav-active');
+      var body = $('body');
+      if (body.hasClass('mobile-nav-active')) {
+        body.removeClass('mobile-nav-active');
         $('.mobile-nav-toggle i').toggleClass('icofont-navigation-menu icofont-close');
       }
     }
@@ -205,11 +208,27 @@ function addNewGameResult() {
   function onNewGameResultSubmit(event) {
     event.preventDefault();
 
+    var gameName = $('#name').val();
+    var gameDate = $('#game-date').val();
+
+    var gameResults = []
+    $('#game-result-form .game-result-row').each(function (index, item) {
+      var winnerId, looserId, amount;
+      winnerId = $(item).find('select[name=winner] option').filter(':selected').val();
+      looserId = $(item).find('select[name=looser] option').filter(':selected').val();
+      amount = $(item).find('input[name=amount]').val();
+
+      gameResults.push({winnerId: winnerId, looserId: looserId, amount: amount});
+    });
+
+    var formData = { gameName: gameName, gameDate: gameDate, gameResults: JSON.stringify(gameResults) }
+
     $.ajax({
       type: "POST",
       url: $(this).attr('action'),
-      data: {key1:"value", key2:"value2"},
+      data: JSON.stringify(formData),
       dataType: "json",
+      contentType: "application/x-www-form-urlencoded; charset = UTF-8",
       success: function(data) {
         //do success stuff here
       },
