@@ -12,7 +12,7 @@
 
   // Hero typed
   if ($('.typed').length) {
-    let typed_strings = $(".typed").data('typed-items');
+    var typed_strings = $(".typed").data('typed-items');
     typed_strings = typed_strings.split(',')
     new Typed('.typed', {
       strings: typed_strings,
@@ -183,3 +183,38 @@
   });
 
 })(jQuery);
+
+function addNewGameResult() {
+  var row = $('.game-result-row:last');
+  var newRow = row.clone();
+  var rowParent = row.parent();
+
+  newRow.appendTo(rowParent);
+  newRow.find('.amount-group input').val(null);
+
+  newRow.find('.delete-row-btn').css('pointer-events', 'auto');
+  newRow.find('.delete-row-btn').css('opacity', 'inherit');
+}
+
+  function onRowDelete(event) {
+    var currentRow = $(event.currentTarget).closest('.game-result-row');
+    currentRow.remove();
+    event.preventDefault();
+  }
+
+  function onNewGameResultSubmit(event) {
+    event.preventDefault();
+
+    $.ajax({
+      type: "POST",
+      url: $(this).attr('action'),
+      data: {key1:"value", key2:"value2"},
+      dataType: "json",
+      success: function(data) {
+        //do success stuff here
+      },
+      error: function() {
+        //do error stuff here.
+      }
+    });
+  }

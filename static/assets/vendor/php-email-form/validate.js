@@ -41,6 +41,16 @@
             }
             break;
 
+          // case 'minval':
+          //   console.log('minval')
+          //   var amount = parseInt(exp);
+          //   console.log('amount ' + amount)
+          //   if (isNaN(amount) || amount <= 0) {
+          //     console.log('isNaN(amount) || amount <= 0')
+          //     ferror = ierror = true;
+          //   }
+          //   break;
+
           case 'email':
             if (!emailExp.test(i.val())) {
               ferror = ierror = true;
@@ -90,6 +100,16 @@
               ferror = ierror = true;
             }
             break;
+
+          case 'minval':
+            console.log('minval')
+            var amount = parseInt(exp);
+            console.log('amount ' + amount)
+            // if (isNaN(amount) || amount <= 0) {
+            //   console.log('isNaN(amount) || amount <= 0')
+            //   ferror = ierror = true;
+            // }
+            break;
         }
         i.next('.validate').html((ierror ? (i.attr('data-msg') !== undefined ? i.attr('data-msg') : 'wrong Input') : '')).show('blind');
       }
@@ -99,6 +119,9 @@
     var this_form = $(this);
     var action = $(this).attr('action');
 
+    if (1 < 2) {
+      return;
+    }
     if( ! action ) {
       this_form.find('.loading').slideUp();
       this_form.find('.error-message').slideDown().html('The form action property is not set!');

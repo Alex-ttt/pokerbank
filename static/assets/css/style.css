@@ -1169,3 +1169,21 @@ section {
 #footer .credits {
   font-size: 13px;
 }
+
+#add-game-result-line {
+  border-radius: 50%;
+}
+
+.delete-row-btn {
+  height: 50%;
+}
+
+.game-result-row {
+  padding-left: 0.3em;
+}
+
+.delete-row-btn:first-child {
+  pointer-events: none;
+  opacity: 20%;
+}
+

@@ -36,11 +36,21 @@ type GameInfoViewModel struct {
 	Games []Game
 }
 
+type PlayersSourceViewModel struct {
+	Players []Player
+}
+
+type Player struct {
+	Id   int
+	Name string
+}
+
 type IndexPageViewModel struct {
-	Games      GameInfoViewModel
-	Debts      PlayersDebtsViewModel
-	Payments   PaymentsViewModel
-	Offsetting OffsettingViewModel
+	Games         GameInfoViewModel
+	Debts         PlayersDebtsViewModel
+	Payments      PaymentsViewModel
+	Offsetting    OffsettingViewModel
+	PlayersSource PlayersSourceViewModel
 }
 
 type Payment struct {
@@ -66,11 +76,41 @@ type OffsettingViewModel struct {
 
 func GetIndexPageViewModel(db *sql.DB) IndexPageViewModel {
 	return IndexPageViewModel{
-		Games:      GetGamesInfo(db),
-		Debts:      *GetPlayersDebts(db),
-		Payments:   GetPlayersPayments(db),
-		Offsetting: GetOffsetting(db),
+		Games:         GetGamesInfo(db),
+		Debts:         *GetPlayersDebts(db),
+		Payments:      GetPlayersPayments(db),
+		Offsetting:    GetOffsetting(db),
+		PlayersSource: GetPlayersSource(db),
 	}
+}
+
+func GetPlayersSource(db *sql.DB) PlayersSourceViewModel {
+	rows, err := db.Query("select * from poker.playerslist();")
+	if err != nil {
+		log.Panic(err)
+	}
+
+	var (
+		id     int
+		name   string
+		result = PlayersSourceViewModel{
+			Players: make([]Player, 0, 8),
+		}
+	)
+
+	for rows.Next() {
+		err = rows.Scan(&id, &name)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		result.Players = append(result.Players, Player{
+			Id:   id,
+			Name: name,
+		})
+	}
+
+	return result
 }
 
 func GetOffsetting(db *sql.DB) OffsettingViewModel {

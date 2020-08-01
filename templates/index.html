@@ -25,6 +25,7 @@
     <link href="/static/assets/vendor/venobox/venobox.css" rel="stylesheet">
     <link href="/static/assets/vendor/owl.carousel/assets/owl.carousel.min.css" rel="stylesheet">
     <link href="/static/assets/vendor/aos/aos.css" rel="stylesheet">
+    <link href="/static/assets/vendor/datepicker/css/bootstrap-datepicker3.min.css" rel="stylesheet">
     <link href="/static/stylesheets/index.css" rel="stylesheet">
 
     <!-- Template Main CSS File -->
@@ -675,12 +676,12 @@
 {{/*    </section><!-- End Testimonials Section -->*/}}
 
     <!-- ======= Contact Section ======= -->
-{{/*    <section id="contact" class="contact">*/}}
-{{/*        <div class="container" data-aos="fade-up">*/}}
+    <section id="contact" class="contact">
+        <div class="container" data-aos="fade-up">
 
-{{/*            <div class="section-title">*/}}
-{{/*                <h2>Contact</h2>*/}}
-{{/*            </div>*/}}
+            <div class="section-title">
+                <h2>Contact</h2>
+            </div>
 
 {{/*            <div class="row mt-1">*/}}
 
@@ -708,39 +709,67 @@
 {{/*                </div>*/}}
 {{/*            </div>*/}}
 
-{{/*            <div class="col-lg-6 mt-5 mt-lg-0">*/}}
+            <div class="col-lg-9 mt-5 mt-lg-0 offset-lg-3">
 
-{{/*                <form action="/" method="POST" role="form" class="php-email-form">*/}}
-{{/*                    <div class="form-row">*/}}
-{{/*                        <div class="col-md-6 form-group">*/}}
-{{/*                            <input type="text" name="name" class="form-control" id="name" placeholder="Your Name" data-rule="minlen:4" data-msg="Please enter at least 4 chars" />*/}}
-{{/*                            <div class="validate"></div>*/}}
-{{/*                        </div>*/}}
-{{/*                        <div class="col-md-6 form-group">*/}}
-{{/*                            <input type="email" class="form-control" name="email" id="email" placeholder="Your Email" data-rule="email" data-msg="Please enter a valid email" />*/}}
-{{/*                            <div class="validate"></div>*/}}
-{{/*                        </div>*/}}
-{{/*                    </div>*/}}
-{{/*                    <div class="form-group">*/}}
-{{/*                        <input type="text" class="form-control" name="subject" id="subject" placeholder="Subject" data-rule="minlen:4" data-msg="Please enter at least 8 chars of subject" />*/}}
-{{/*                        <div class="validate"></div>*/}}
-{{/*                    </div>*/}}
-{{/*                    <div class="form-group">*/}}
-{{/*                        <textarea class="form-control" name="message" rows="5" data-rule="required" data-msg="Please write something for us" placeholder="Message"></textarea>*/}}
-{{/*                        <div class="validate"></div>*/}}
-{{/*                    </div>*/}}
-{{/*                    <div class="mb-3">*/}}
-{{/*                        <div class="loading">Loading</div>*/}}
-{{/*                        <div class="error-message"></div>*/}}
-{{/*                        <div class="sent-message">Your message has been sent. Thank you!</div>*/}}
-{{/*                    </div>*/}}
-{{/*                    <div class="text-center"><button type="submit">Send Message</button></div>*/}}
-{{/*                </form>*/}}
+                <form id="game-result-form" action="/" method="POST" role="form" class="php-email-form" onsubmit="onNewGameResultSubmit(event)">
+                    <div class="form-row">
+                        <div class="col-md-12 form-group">
+                            <input type="text" name="name" class="form-control" id="name" placeholder="Название игры" data-rule="minlen:4" data-msg="Давай нормальное описание - подлиньше" />
+                            <div class="validate"></div>
+                        </div>
+                        <div class="col-md-12 form-group">
+                            <div class="input-group date" data-provide="datepicker">
+                                <input id="game-date" type="text" name="date" class="form-control" placeholder="Дата игры" autocomplete="off">
+                                <div class="input-group-addon" style="display: none">
+                                    <i class="bx bx-crosshair"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row game-result-row">
+                            <div class="col-md-4 form-group winner-group">
+                                <select name="winner" class="custom-select winner-select form-control">
+                                    <option selected>Выиграл</option>
+                                    {{ range $i, $elem := .PlayersSource.Players}}
+                                        <option value="{{ .Id }}">{{ .Name }}</option>
+                                    {{ end }}
+                                </select>
+                                <div class="validate"></div>
+                            </div>
+                            <div class="col-md-4 form-group looser-group">
+                                <select name="looser" class="custom-select loser-select form-control">
+                                    <option selected>Проиграл</option>
+                                    {{ range $i, $elem := .PlayersSource.Players}}
+                                        <option value="{{ .Id }}">{{ .Name }}</option>
+                                    {{ end }}
+                                </select>
+                                <div class="validate"></div>
+                            </div>
+                            <div class="col-md-3 form-group amount-group">
+                                <input type="number" min="0" name="amount" class="form-control" id="amount" placeholder="Сумма" data-msg="Внесите сумму долга" autocomplete="off" />
+                                <div class="validate"></div>
+                            </div>
+                            <div class="col-md-1 form-group delete-row align-self-center">
+                                <div class="delete-row-btn">
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="onRowDelete(event)"><i class="bx bx-minus"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <button id="add-game-result-line" type="button" class="btn btn-primary" onclick="addNewGameResult()"><i class="bx bx-plus"></i></button>
+                    </div>
+                    <div class="mb-3">
+                        <div class="loading">Loading</div>
+                        <div class="error-message"></div>
+                        <div class="sent-message">Your message has been sent. Thank you!</div>
+                    </div>
+                    <div class="text-center"><button type="submit">Send Message</button></div>
+                </form>
 
-{{/*            </div>*/}}
+            </div>
 
-{{/*        </div>*/}}
-{{/*    </section><!-- End Contact Section -->*/}}
+        </div>
+    </section><!-- End Contact Section -->
 
 </main><!-- End #main -->
 
@@ -783,6 +812,7 @@
 <script src="/static/assets/vendor/owl.carousel/owl.carousel.min.js"></script>
 <script src="/static/assets/vendor/typed.js/typed.min.js"></script>
 <script src="/static/assets/vendor/aos/aos.js"></script>
+<script src="/static/assets/vendor/datepicker/js/bootstrap-datepicker.min.js"></script>
 
 <!-- Template Main JS File -->
 <script src="/static/assets/js/main.js"></script>

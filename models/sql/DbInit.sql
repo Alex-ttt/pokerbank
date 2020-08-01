@@ -358,3 +358,18 @@ end;
 $$;
 
 alter function poker.InsertGameResult(gameName varchar, gameDate date, results poker.PlayerGameResult[]) owner to postgres;
+
+create function poker.playerslist()
+    returns TABLE(id int, Name character varying)
+    language plpgsql
+as
+$$
+BEGIN
+    return query
+        select p."Id", concat(p."Name", coalesce(concat(' ', p."Surname"), ''))::character varying
+        from poker."Players" as p
+        order by p."Id";
+END
+$$;
+
+alter function poker.playerslist() owner to postgres;
