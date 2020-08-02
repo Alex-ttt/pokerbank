@@ -714,20 +714,21 @@
                 <form id="game-result-form" action="/" method="POST" role="form" class="php-email-form" onsubmit="onNewGameResultSubmit(event)">
                     <div class="form-row">
                         <div class="col-md-12 form-group">
-                            <input type="text" name="name" class="form-control" id="name" placeholder="Название игры" data-rule="minlen:4" data-msg="Давай нормальное описание - подлиньше" autocomplete="off" />
+                            <input type="text" name="name" class="form-control" id="name" placeholder="Название игры" data-msg="Давай нормальное описание - подлиньше" autocomplete="off" />
                             <div class="validate"></div>
                         </div>
                         <div class="col-md-12 form-group">
                             <div class="input-group date" data-provide="datepicker">
-                                <input id="game-date" type="text" name="date" class="form-control" placeholder="Дата игры" autocomplete="off">
+                                <input id="game-date" type="text" name="date" class="form-control" placeholder="Дата игры" autocomplete="off" data-msg="Когда была игра?">
                                 <div class="input-group-addon" style="display: none">
                                     <i class="bx bx-crosshair"></i>
                                 </div>
                             </div>
+                            <div class="validate"></div>
                         </div>
-                        <div class="row game-result-row">
+                        <div class="col-md-12 row game-result-row">
                             <div class="col-md-4 form-group winner-group">
-                                <select name="winner" class="custom-select winner-select form-control">
+                                <select name="winner" class="custom-select winner-select form-control" data-msg="Кто выиграл?">
                                     <option selected>Выиграл</option>
                                     {{ range $i, $elem := .PlayersSource.Players}}
                                         <option value="{{ .Id }}">{{ .Name }}</option>
@@ -736,7 +737,7 @@
                                 <div class="validate"></div>
                             </div>
                             <div class="col-md-4 form-group looser-group">
-                                <select name="looser" class="custom-select loser-select form-control">
+                                <select name="looser" class="custom-select loser-select form-control" data-msg="Кто проиграл?">
                                     <option selected>Проиграл</option>
                                     {{ range $i, $elem := .PlayersSource.Players}}
                                         <option value="{{ .Id }}">{{ .Name }}</option>
@@ -745,7 +746,7 @@
                                 <div class="validate"></div>
                             </div>
                             <div class="col-md-3 form-group amount-group">
-                                <input type="number" min="0" name="amount" class="form-control" id="amount" placeholder="Сумма" data-msg="Внесите сумму долга" autocomplete="off" />
+                                <input type="number" name="amount" class="form-control" id="amount" placeholder="Сумма" data-msg="Сколько денег?" autocomplete="off" />
                                 <div class="validate"></div>
                             </div>
                             <div class="col-md-1 form-group delete-row align-self-center">
@@ -754,6 +755,7 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="validate"></div>
                     </div>
                     <div class="text-right">
                         <button id="add-game-result-line" type="button" class="btn btn-primary" onclick="addNewGameResult()"><i class="bx bx-plus"></i></button>

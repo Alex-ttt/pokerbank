@@ -73,11 +73,11 @@ func IndexPage(writer http.ResponseWriter, request *http.Request) {
 		var t GameResult
 		err := decoder.Decode(&t)
 		if err != nil {
-			panic(err)
+			writer.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
 		writer.WriteHeader(http.StatusOK)
-
 		return
 	}
 

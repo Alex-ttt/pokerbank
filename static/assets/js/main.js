@@ -189,10 +189,14 @@
 
 function addNewGameResult() {
   var row = $('.game-result-row:last');
-  var newRow = row.clone();
-  var rowParent = row.parent();
+  var newRow = row.clone(),
+      rowParent = row.parent(),
+      validateRow = row.next('.validate').clone();
 
   newRow.appendTo(rowParent);
+  newRow.hide().slideDown();
+  validateRow.html('');
+  validateRow.appendTo(rowParent);
   newRow.find('.amount-group input').val(null);
 
   newRow.find('.delete-row-btn').css('pointer-events', 'auto');
@@ -201,39 +205,146 @@ function addNewGameResult() {
 
   function onRowDelete(event) {
     var currentRow = $(event.currentTarget).closest('.game-result-row');
-    currentRow.remove();
+    var validateRow = currentRow.next('.validate');
+
+    validateRow.hide('blind', function () {
+      validateRow.remove();
+    });
+    currentRow.hide('blind', function f() {
+      currentRow.remove();
+    });
+
     event.preventDefault();
+  }
+
+  function validateGameName(gameName, validationBlock, errorMessage) {
+    if(!gameName || gameName.length < 5) {
+      validationBlock.html(errorMessage).show('blind');
+      return false;
+    } else {
+      validationBlock.hide('blind');
+      return true;
+    }
+  }
+
+  function validateGameDate(gameDate, validationBlock, errorMessage) {
+    if(!gameDate || gameDate.length === 0) {
+      validationBlock.html(errorMessage).show('blind');
+      return false;
+    } else {
+      validationBlock.hide('blind');
+      return true;
+    }
+  }
+
+  function validatePlayer (playerId, validationBlock, errorMessage) {
+    // noinspection EqualityComparisonWithCoercionJS
+    if (!playerId || playerId == 0) {
+      validationBlock.html(errorMessage).show('blind');
+      return false;
+    } else {
+      validationBlock.hide('blind');
+      return true;
+    }
+  }
+
+  function validateResultRow(winnerId, looserId, validationBlock, errorMessage) {
+    if(winnerId >0 && looserId > 0 && winnerId === looserId) {
+      validationBlock.html(errorMessage).show('blind');
+      return false;
+    } else {
+      validationBlock.hide('blind');
+      return true;
+    }
+  }
+
+  function validateAmount(amount, validationBlock, errorMessage) {
+    if (!amount || amount <= 0) {
+      validationBlock.html(errorMessage).show('blind');
+      return false;
+    } else {
+      validationBlock.hide('blind');
+      return true;
+    }
   }
 
   function onNewGameResultSubmit(event) {
     event.preventDefault();
 
-    var gameName = $('#name').val();
-    var gameDate = $('#game-date').val();
+    var gameName = $('#name'),
+        gameDate = $('#game-date'),
+        this_form = $(this),
+        gameResults = [],
+        isValidationOk = true;
 
-    var gameResults = []
+    // noinspection JSBitwiseOperatorUsage
+    isValidationOk = validateGameName(gameName.val(), gameName.next('.validate'), gameName.attr('data-msg')) & validateGameDate(gameDate.val(), gameDate.parent().next('.validate'), gameDate.attr('data-msg'));
+
     $('#game-result-form .game-result-row').each(function (index, item) {
-      var winnerId, looserId, amount;
-      winnerId = $(item).find('select[name=winner] option').filter(':selected').val();
-      looserId = $(item).find('select[name=looser] option').filter(':selected').val();
-      amount = $(item).find('input[name=amount]').val();
+      var winnerId, looserId, amount, isRowValidationOk,
+          winnerElement = $(item).find('select[name=winner]'),
+          looserElement = $(item).find('select[name=looser]'),
+          amountElement = $(item).find('input[name=amount]');
 
-      gameResults.push({winnerId: winnerId, looserId: looserId, amount: amount});
+      winnerId = parseInt(winnerElement.find('option').filter(':selected').val());
+      isRowValidationOk = validatePlayer(winnerId, winnerElement.next('.validate'), winnerElement.attr('data-msg'));
+
+      looserId = parseInt(looserElement.find('option').filter(':selected').val());
+      isRowValidationOk = validatePlayer(looserId, looserElement.next('.validate'), looserElement.attr('data-msg')) && isRowValidationOk;
+
+      amount = amountElement.val();
+      isRowValidationOk = validateAmount(amount, amountElement.next('.validate'), amountElement.attr('data-msg')) && isRowValidationOk;
+
+      if (isRowValidationOk) {
+        isRowValidationOk = validateResultRow(winnerId, looserId, $(item).next('.validate'), 'Сам у себя победил?') && isRowValidationOk;
+      }
+
+      isValidationOk = isValidationOk && isRowValidationOk;
+      if (isValidationOk) {
+        gameResults.push({winnerId: winnerId, looserId: looserId, amount: amount});
+      }
     });
 
-    var formData = { gameName: gameName, gameDate: gameDate, gameResults: JSON.stringify(gameResults) }
+    if (isValidationOk) {
+      var formData = { gameName: gameName.val(), gameDate: gameDate.val(), gameResults: JSON.stringify(gameResults) }
+      addGameResult(this_form.attr('action'), JSON.stringify(formData), this_form)
+    }
+  }
 
+  function addGameResult(action, data, this_form) {
     $.ajax({
       type: "POST",
-      url: $(this).attr('action'),
-      data: JSON.stringify(formData),
+      url: action,
+      data: data,
       dataType: "json",
       contentType: "application/x-www-form-urlencoded; charset = UTF-8",
-      success: function(data) {
-        //do success stuff here
+      success: function(data, textStatus ){
+        if (textStatus === 'success') {
+          this_form.find('.loading').slideUp();
+          this_form.find('.sent-message').slideDown();
+          this_form.find("input:not(input[type=submit]), textarea").val('');
+        } else {
+          this_form.find('.loading').slideUp();
+          this_form.find('.error-message').slideDown().html(textStatus);
+        }
       },
-      error: function() {
-        //do error stuff here.
+      error: function(data) {
+        var error_msg = "Form submission failed!<br>";
+        if(data.statusText || data.status) {
+          error_msg += 'Status:';
+          if(data.statusText) {
+            error_msg += ' ' + data.statusText;
+          }
+          if(data.status) {
+            error_msg += ' ' + data.status;
+          }
+          error_msg += '<br>';
+        }
+        if(data.responseText) {
+          error_msg += data.responseText;
+        }
+        this_form.find('.loading').slideUp();
+        this_form.find('.error-message').slideDown().html(error_msg);
       }
     });
   }
