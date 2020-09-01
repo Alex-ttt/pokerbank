@@ -2,6 +2,10 @@ package repository
 
 import (
 	"database/sql"
+	"database/sql/driver"
+	"encoding/json"
+	"fmt"
+	"github.com/lib/pq"
 	"log"
 	"sort"
 	"time"
@@ -18,6 +22,55 @@ type PlayersDebtsViewModel struct {
 	Winners []Winner
 }
 
+type GameResultInsertDto struct {
+	GameName    string
+	GameDate    time.Time
+	GameResults []PlayerGameResultInsertDto
+}
+
+type PlayerGameResultInsertDto struct {
+	WinnerId int `json:"winnerId"`
+	LoserId  int `json:"looserId"`
+	Amount   int `json:"amount"`
+}
+
+func (gameResult *GameResultInsertDto) UnmarshalJSON(data []byte) error {
+	obj := &map[string]string{}
+	if err := json.Unmarshal(data, &obj); err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	gameResult.GameName = (*obj)["gameName"]
+	gameDate, err := time.Parse("2006-01-02", (*obj)["gameDate"])
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	gameResult.GameDate = gameDate
+	results := (*obj)["gameResults"]
+	var playersResults []map[string]int
+	if err := json.Unmarshal([]byte(results), &playersResults); err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	gameResult.GameResults = make([]PlayerGameResultInsertDto, 0, len(playersResults))
+	for _, el := range playersResults {
+		gameResult.GameResults = append(gameResult.GameResults, PlayerGameResultInsertDto{
+			WinnerId: el["winnerId"],
+			LoserId:  el["looserId"],
+			Amount:   el["amount"],
+		})
+	}
+
+	return nil
+}
+
+func (i PlayerGameResultInsertDto) Value() (driver.Value, error) {
+	return fmt.Sprintf("(%v, %v, %v)", i.WinnerId, i.LoserId, i.Amount), nil
+}
+
 type PlayerGameResult struct {
 	Name   string
 	Amount int
@@ -29,7 +82,6 @@ type Game struct {
 	IsDateValid    bool
 	Amount         int
 	PlayersResults []PlayerGameResult
-	IsOdd          bool
 }
 
 type GameInfoViewModel struct {
@@ -170,6 +222,21 @@ func GetPlayersPayments(db *sql.DB) PaymentsViewModel {
 	return result
 }
 
+func AddGameWithResults(db *sql.DB, gameResults *GameResultInsertDto) error {
+	_, _err := db.Exec(
+		"select poker.insertgameresult($1, $2::date, $3::poker.playergameresult[])",
+		gameResults.GameName,
+		gameResults.GameDate.Format("2006-01-02"),
+		pq.Array(gameResults.GameResults))
+
+	if _err != nil {
+		log.Panic(_err)
+		return _err
+	}
+
+	return nil
+}
+
 func GetGamesInfo(db *sql.DB) GameInfoViewModel {
 	rows, err := db.Query("select * from poker.gamesinfo();")
 	if err != nil {
@@ -219,11 +286,6 @@ func GetGamesInfo(db *sql.DB) GameInfoViewModel {
 	sort.SliceStable(result.Games, func(i, j int) bool {
 		return result.Games[i].Date.After(result.Games[j].Date)
 	})
-	isOdd := true
-	for i := 0; i < len(result.Games); i++ {
-		result.Games[i].IsOdd = isOdd
-		isOdd = !isOdd
-	}
 
 	return result
 }

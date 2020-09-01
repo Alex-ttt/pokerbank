@@ -219,7 +219,7 @@ function addNewGameResult() {
 
   function validateGameName(gameName, validationBlock, errorMessage) {
     if(!gameName || gameName.length < 5) {
-      validationBlock.html(errorMessage).show('blind');
+      validationBlock.html(errorMessage).slideDown();
       return false;
     } else {
       validationBlock.hide('blind');
@@ -229,7 +229,7 @@ function addNewGameResult() {
 
   function validateGameDate(gameDate, validationBlock, errorMessage) {
     if(!gameDate || gameDate.length === 0) {
-      validationBlock.html(errorMessage).show('blind');
+      validationBlock.html(errorMessage).slideDown();
       return false;
     } else {
       validationBlock.hide('blind');
@@ -240,7 +240,7 @@ function addNewGameResult() {
   function validatePlayer (playerId, validationBlock, errorMessage) {
     // noinspection EqualityComparisonWithCoercionJS
     if (!playerId || playerId == 0) {
-      validationBlock.html(errorMessage).show('blind');
+      validationBlock.html(errorMessage).slideDown();
       return false;
     } else {
       validationBlock.hide('blind');
@@ -250,7 +250,7 @@ function addNewGameResult() {
 
   function validateResultRow(winnerId, looserId, validationBlock, errorMessage) {
     if(winnerId >0 && looserId > 0 && winnerId === looserId) {
-      validationBlock.html(errorMessage).show('blind');
+      validationBlock.html(errorMessage).slideDown();
       return false;
     } else {
       validationBlock.hide('blind');
@@ -258,14 +258,41 @@ function addNewGameResult() {
     }
   }
 
-  function validateAmount(amount, validationBlock, errorMessage) {
-    if (!amount || amount <= 0) {
-      validationBlock.html(errorMessage).show('blind');
+  function validateAmount(amount, validationBlock, errorMessage, negativeValueErrorMessage) {
+    if (!amount) {
+      validationBlock.html(errorMessage).slideDown();
       return false;
+    } else if(amount <= 0) {
+      validationBlock.html(negativeValueErrorMessage).slideDown();
     } else {
       validationBlock.hide('blind');
       return true;
     }
+  }
+
+  function validateAllResults(gameResults, validationBlock) {
+    for(var i = 0; i < gameResults.length; i++) {
+      var iRow = gameResults[i];
+
+      for (var j = i + 1; j < gameResults.length; j ++){
+        var wrongPlayerId, jRow = gameResults[j];
+
+        if(iRow.winnerId === jRow.looserId){
+          wrongPlayerId = iRow.winnerId;
+        } else if (iRow.looserId === jRow.winnerId) {
+          wrongPlayerId = iRow.looserId;
+        } else {
+          continue;
+        }
+
+        var wrongPlayerName = $('select[name=winner]:first').find('option[value="' + wrongPlayerId + '"]').text();
+        validationBlock.html('Игрок ' + wrongPlayerName + ' не может одновременно победить и проиграть').slideDown();
+        return false;
+      }
+    }
+
+    validationBlock.hide('blind');
+    return true;
   }
 
   function onNewGameResultSubmit(event) {
@@ -292,18 +319,18 @@ function addNewGameResult() {
       looserId = parseInt(looserElement.find('option').filter(':selected').val());
       isRowValidationOk = validatePlayer(looserId, looserElement.next('.validate'), looserElement.attr('data-msg')) && isRowValidationOk;
 
-      amount = amountElement.val();
-      isRowValidationOk = validateAmount(amount, amountElement.next('.validate'), amountElement.attr('data-msg')) && isRowValidationOk;
+      amount = parseInt(amountElement.val());
+      isRowValidationOk = validateAmount(amount, amountElement.next('.validate'), amountElement.attr('data-msg'), 'Выигрыш должен быть больше 0') && isRowValidationOk;
 
       if (isRowValidationOk) {
         isRowValidationOk = validateResultRow(winnerId, looserId, $(item).next('.validate'), 'Сам у себя победил?') && isRowValidationOk;
       }
 
       isValidationOk = isValidationOk && isRowValidationOk;
-      if (isValidationOk) {
-        gameResults.push({winnerId: winnerId, looserId: looserId, amount: amount});
-      }
+      gameResults.push({winnerId: winnerId, looserId: looserId, amount: amount});
     });
+
+    isValidationOk = validateAllResults(gameResults, $('#common-validation')) && isValidationOk;
 
     if (isValidationOk) {
       var formData = { gameName: gameName.val(), gameDate: gameDate.val(), gameResults: JSON.stringify(gameResults) }
@@ -312,23 +339,32 @@ function addNewGameResult() {
   }
 
   function addGameResult(action, data, this_form) {
+    var submitButton = $('#game-result-form button[type=submit]');
+    submitButton.prop('disabled', true);
+    submitButton.css('opacity', '0.5');
+
     $.ajax({
       type: "POST",
       url: action,
       data: data,
-      dataType: "json",
       contentType: "application/x-www-form-urlencoded; charset = UTF-8",
       success: function(data, textStatus ){
+        console.log("success data");
+        console.log(textStatus);
         if (textStatus === 'success') {
-          this_form.find('.loading').slideUp();
-          this_form.find('.sent-message').slideDown();
-          this_form.find("input:not(input[type=submit]), textarea").val('');
+          location.reload();
+          // this_form.find('.loading').slideUp();
+          // this_form.find('.sent-message').slideDown();
+          // this_form.find("input:not(input[type=submit]), textarea").val('');
         } else {
           this_form.find('.loading').slideUp();
           this_form.find('.error-message').slideDown().html(textStatus);
         }
       },
-      error: function(data) {
+      done: function(data) {
+        console.log('done data')
+        console.log(data)
+        location.reload();
         var error_msg = "Form submission failed!<br>";
         if(data.statusText || data.status) {
           error_msg += 'Status:';
@@ -345,6 +381,13 @@ function addNewGameResult() {
         }
         this_form.find('.loading').slideUp();
         this_form.find('.error-message').slideDown().html(error_msg);
+      },
+      error:function (data, a, b, c, d) {
+        console.log(data);
+        console.log(a);
+        console.log(b);
+        console.log(c);
+        console.log(d);
       }
     });
   }

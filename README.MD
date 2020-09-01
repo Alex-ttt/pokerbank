@@ -3,3 +3,7 @@
 ```shell script
 gcloud sql connect postgres-instanse --user=postgres --quiet
 ````
+Команда публикации приложения в Google App Engine, параметр --project не нужен, если проект уже выбран:
+````
+gcloud app deploy --project [YOUR_PROJECT_ID]
+````

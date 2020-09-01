@@ -37,3 +37,33 @@
     margin-top: -25px;
     padding-left: 1em;
  }
+
+
+ #add-game-result-line {
+     border-radius: 50%;
+ }
+
+ .delete-row-btn {
+     height: 50%;
+ }
+
+ .game-result-row {
+     padding-left: 0.3em !important;
+ }
+
+ #game-results-beginning {
+     display: none;
+ }
+
+ #game-results-beginning + .game-result-row .delete-row-btn button {
+     pointer-events: none;
+     opacity: 20%;
+ }
+
+ .delete-row-btn {
+     float: right !important;
+ }
+
+ .game-info-item {
+     display: flex !important;
+ }
