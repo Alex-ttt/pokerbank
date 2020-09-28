@@ -96,6 +96,7 @@ create or replace function poker.playersdebts()
             (
                 winnerId int,
                 winnername character varying,
+                loserId int,
                 losername character varying,
                 playerwin integer,
                 commonplayerwin integer
@@ -182,6 +183,7 @@ BEGIN
         select
             w."Id",
             w."Name" AS WinnerName,
+            l."Id",
             l."Name" AS LoserName,
             cast(source.DebtAmount AS int) AS PlayerWin,
             cast(
@@ -223,6 +225,29 @@ $$;
 
 alter function poker.playersdebts() owner to postgres;
 
+create or replace function poker.insertdebtpayment(payerId int, receiverId int, amount int) returns void
+    language plpgsql
+as
+$$
+begin
+    if (
+            exists(
+                    select *
+                    from poker.playersdebts() AS debts
+                    where debts.winnerid = receiverId
+                      and debts.loserid = payerId
+                      and debts.playerwin >= amount
+                )
+            and amount > 0
+        )
+    then
+        insert into poker."DebtPayments"("PayerId", "RecipientId", "Amount") VALUES (payerId, receiverId, amount);
+    end if;
+end
+$$;
+
+alter function poker.insertdebtpayment(integer, integer, integer) owner to postgres;
+
 create or replace function poker.playerspayments()
     returns TABLE
             (
@@ -242,8 +267,6 @@ BEGIN
         order by paym."Id" desc;
 END
 $$;
-
-alter function poker.playersdebts() owner to postgres;
 
 create or replace function poker.playersoffsetting()
     returns TABLE

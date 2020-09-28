@@ -8,6 +8,27 @@ import (
 	"pokerscore/repository"
 )
 
+func AddDebtPayment(writer http.ResponseWriter, request *http.Request) {
+	if request.Method == http.MethodPost {
+		decoder := json.NewDecoder(request.Body)
+		var insertDto repository.DebtPaymentInsertDto
+
+		err := decoder.Decode(&insertDto)
+		if err != nil {
+			panic(err)
+		}
+
+		err = repository.AddDebtPayment(models.Db, &insertDto)
+		if err != nil {
+			panic(err)
+		}
+
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte("{}"))
+		return
+	}
+}
+
 func IndexPage(writer http.ResponseWriter, request *http.Request) {
 	if request.Method == http.MethodPost {
 		decoder := json.NewDecoder(request.Body)

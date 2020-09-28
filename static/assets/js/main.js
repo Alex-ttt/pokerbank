@@ -248,7 +248,7 @@ function addNewGameResult() {
     }
   }
 
-  function validateResultRow(winnerId, looserId, validationBlock, errorMessage) {
+  function validateSameValues(winnerId, looserId, validationBlock, errorMessage) {
     if(winnerId >0 && looserId > 0 && winnerId === looserId) {
       validationBlock.html(errorMessage).slideDown();
       return false;
@@ -295,6 +295,60 @@ function addNewGameResult() {
     return true;
   }
 
+  function onDebtPaymentSubmit(event) {
+    event.preventDefault();
+
+    var payerElement = $('#debt-payer'),
+        receiverElement = $('#debt-receiver'),
+        amountElement = $('#debt-amount'),
+        isValidationOk = true,
+        amount, payerId, receiverId;
+
+    payerId = parseInt(payerElement.find('option').filter(':selected').val());
+    isValidationOk = validatePlayer(payerId, payerElement.next('.validate'), payerElement.attr('data-msg')) && isValidationOk;
+
+    receiverId = parseInt(receiverElement.find('option').filter(':selected').val());
+    isValidationOk = validatePlayer(receiverId, receiverElement.next('.validate'), receiverElement.attr('data-msg')) && isValidationOk;
+
+    amount = parseInt(amountElement.val());
+    isValidationOk = validateAmount(amount, amountElement.next('.validate'), amountElement.attr('data-msg'), 'Сумма возврата долга должна быть больше 0');
+
+    if (isValidationOk) {
+      if(!validateSameValues(receiverId, payerId, $('#debt-payment-common-validation'), 'Нельзя отдать долги самому себе')){
+        return;
+      }
+    } else {
+      return;
+    }
+
+    var submitButton = $('#pay-debt');
+    disableElement(submitButton);
+    $.ajax({
+      type: "POST",
+      url: "/payDebts",
+      data: JSON.stringify({ payerId: payerId, receiverId: receiverId, amount: amount}),
+      contentType: "application/x-www-form-urlencoded; charset = UTF-8",
+      success: function(data, textStatus ) {
+        console.log("success data");
+        console.log(textStatus);
+        location.reload();
+      },
+      done: function(data) {
+        console.log('done data')
+        console.log(data)
+
+      },
+      error:function (data, a, b, c, d) {
+        console.log(data);
+        console.log(a);
+        console.log(b);
+        console.log(c);
+        console.log(d);
+      }
+    });
+
+  }
+
   function onNewGameResultSubmit(event) {
     event.preventDefault();
 
@@ -323,25 +377,30 @@ function addNewGameResult() {
       isRowValidationOk = validateAmount(amount, amountElement.next('.validate'), amountElement.attr('data-msg'), 'Выигрыш должен быть больше 0') && isRowValidationOk;
 
       if (isRowValidationOk) {
-        isRowValidationOk = validateResultRow(winnerId, looserId, $(item).next('.validate'), 'Сам у себя победил?') && isRowValidationOk;
+        isRowValidationOk = validateSameValues(winnerId, looserId, $(item).next('.validate'), 'Сам у себя победил?') && isRowValidationOk;
       }
 
       isValidationOk = isValidationOk && isRowValidationOk;
       gameResults.push({winnerId: winnerId, looserId: looserId, amount: amount});
     });
 
-    isValidationOk = validateAllResults(gameResults, $('#common-validation')) && isValidationOk;
+    isValidationOk = validateAllResults(gameResults, $('#game-result-common-validation')) && isValidationOk;
 
     if (isValidationOk) {
       var formData = { gameName: gameName.val(), gameDate: gameDate.val(), gameResults: JSON.stringify(gameResults) }
-      addGameResult(this_form.attr('action'), JSON.stringify(formData), this_form)
+      addGameResult(this_form.attr('action'), JSON.stringify(formData), this_form);
     }
   }
 
+  function disableElement(element) {
+    element.prop('disabled', true);
+    element.css('opacity', '0.5');
+  }
+
+
   function addGameResult(action, data, this_form) {
     var submitButton = $('#game-result-form button[type=submit]');
-    submitButton.prop('disabled', true);
-    submitButton.css('opacity', '0.5');
+    disableElement(submitButton);
 
     $.ajax({
       type: "POST",

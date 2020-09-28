@@ -109,7 +109,7 @@
                 <h2>Игры</h2>
            </div>
 
-            <div class="row">
+            <div class="row games-thread">
                 {{ range $i, $elem := .Games.Games}}
                 <div class="col-lg-6 game-info-item">
                     <div class="resume-item">
@@ -117,7 +117,9 @@
                         {{ if .IsDateValid }}
                             <h5>{{ .Date.Format "02.01.2006" }}</h5>
                         {{ end }}
-                        <p><em>Разыгранный банк {{ .Amount }}<span class="ruble-icon">₽</span></em></p>
+                        <p>
+                            <em>Разыгранный банк {{ .Amount }}<span class="ruble-icon">₽</span></em>
+                        </p>
                         <ul>
                             {{ range .PlayersResults }}
                                 <li>{{.Name}}: {{ if gt .Amount 0 }} +{{ end }}{{.Amount}}</li>
@@ -321,71 +323,122 @@
                     <h1>Результаты</h1>
                     <h1>Игры</h1>
                 </div>
-            <div class="col-lg-9 mt-5 mt-lg-0">
-                <form id="game-result-form" action="/" method="POST" role="form" class="php-email-form" onsubmit="onNewGameResultSubmit(event)">
-                    <div class="form-row">
-                        <div class="col-md-12 form-group">
-                            <input type="text" name="name" class="form-control" id="name" placeholder="Название игры" data-msg="Давай нормальное описание - подлиньше" autocomplete="off" />
-                            <div class="validate"></div>
-                        </div>
-                        <div class="col-md-12 form-group">
-                            <div class="input-group date" >
-                                <input id="game-date" type="date" name="date" min="2020-01-01" max="2120-01-01" class="form-control" placeholder="Дата игры" autocomplete="off" data-msg="Когда была игра?">
-                                <div class="input-group-addon" style="display: none">
-                                    <i class="bx bx-crosshair"></i>
-                                </div>
+                <div class="col-lg-9 mt-5 mt-lg-0">
+                    <form id="game-result-form" action="/" method="POST" role="form" class="php-email-form" onsubmit="onNewGameResultSubmit(event)">
+                        <div class="form-row">
+                            <div class="col-md-12 form-group">
+                                <input type="text" name="name" class="form-control" id="name" placeholder="Название игры" data-msg="Давай нормальное описание - подлиньше" autocomplete="off" />
+                                <div class="validate"></div>
                             </div>
-                            <div class="validate"></div>
-                        </div>
-                        <div id="game-results-beginning"></div>
-                        {{ $players := .PlayersSource.Players}}
-                        {{ range $ii := seq 3}}
-                            <div class="game-result-row col-md-12 row">
-                                <div class="col-md-4 form-group winner-group">
-                                    <select name="winner" class="custom-select winner-select form-control" data-msg="Кто выиграл?">
-                                        <option selected>Выиграл</option>
-                                        {{ range $i, $elem := $players }}
-                                            <option value="{{ .Id }}">{{ .Name }}</option>
-                                        {{ end }}
-                                    </select>
-                                    <div class="validate"></div>
-                                </div>
-                                <div class="col-md-4 form-group looser-group">
-                                    <select name="looser" class="custom-select loser-select form-control" data-msg="Кто проиграл?">
-                                        <option selected>Проиграл</option>
-                                        {{ range $i, $elem := $players }}
-                                            <option value="{{ .Id }}">{{ .Name }}</option>
-                                        {{ end }}
-                                    </select>
-                                    <div class="validate"></div>
-                                </div>
-                                <div class="col-md-3 form-group amount-group">
-                                    <input type="number" pattern="\d*" name="amount" class="form-control" id="amount" placeholder="Сумма" data-msg="Сколько денег?" autocomplete="off" />
-                                    <div class="validate"></div>
-                                </div>
-                                <div class="col-md-1 form-group">
-                                    <div class="delete-row-btn">
-                                        <button type="button" class="btn btn-sm btn-danger" onclick="onRowDelete(event)"><i class="bx bx-minus"></i></button>
+                            <div class="col-md-12 form-group">
+                                <div class="input-group date" >
+                                    <input id="game-date" type="date" name="date" min="2020-01-01" max="2120-01-01" class="form-control" placeholder="Дата игры" autocomplete="off" data-msg="Когда была игра?">
+                                    <div class="input-group-addon" style="display: none">
+                                        <i class="bx bx-crosshair"></i>
                                     </div>
                                 </div>
+                                <div class="validate"></div>
                             </div>
-                            <div class="validate"></div>
-                        {{ end }}
-                        <div id="common-validation" class="validate"></div>
-                    </div>
-                    <div class="text-right">
-                        <button id="add-game-result-line" type="button" class="btn btn-primary" onclick="addNewGameResult()"><i class="bx bx-plus"></i></button>
-                    </div>
-                    <div class="mb-3">
-                        <div class="loading">Loading</div>
-                        <div class="error-message"></div>
-                        <div class="sent-message">Your message has been sent. Thank you!</div>
-                    </div>
-                    <div class="text-center"><button type="submit">Добавить игру</button></div>
-                </form>
-
+                            <div id="game-results-beginning"></div>
+                            {{ $players := .PlayersSource.Players}}
+                            {{ range $ii := seq 3}}
+                                <div class="game-result-row col-md-12 row">
+                                    <div class="col-md-4 form-group winner-group">
+                                        <select name="winner" class="custom-select winner-select form-control" data-msg="Кто выиграл?">
+                                            <option selected>Выиграл</option>
+                                            {{ range $i, $elem := $players }}
+                                                <option value="{{ .Id }}">{{ .Name }}</option>
+                                            {{ end }}
+                                        </select>
+                                        <div class="validate"></div>
+                                    </div>
+                                    <div class="col-md-4 form-group looser-group">
+                                        <select name="looser" class="custom-select loser-select form-control" data-msg="Кто проиграл?">
+                                            <option selected>Проиграл</option>
+                                            {{ range $i, $elem := $players }}
+                                                <option value="{{ .Id }}">{{ .Name }}</option>
+                                            {{ end }}
+                                        </select>
+                                        <div class="validate"></div>
+                                    </div>
+                                    <div class="col-md-3 form-group amount-group">
+                                        <input type="number" pattern="\d*" name="amount" class="form-control" id="amount" placeholder="Сумма" data-msg="Сколько денег?" autocomplete="off" />
+                                        <div class="validate"></div>
+                                    </div>
+                                    <div class="col-md-1 form-group">
+                                        <div class="delete-row-btn">
+                                            <button type="button" class="btn btn-sm btn-danger" onclick="onRowDelete(event)"><i class="bx bx-minus"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="validate"></div>
+                            {{ end }}
+                            <div id="game-result-common-validation" class="validate"></div>
+                        </div>
+                        <div class="text-right">
+                            <button id="add-game-result-line" type="button" class="btn btn-primary" onclick="addNewGameResult()"><i class="bx bx-plus"></i></button>
+                        </div>
+                        <div class="mb-3">
+                            <div class="loading">Loading</div>
+                            <div class="error-message"></div>
+                            <div class="sent-message">Your message has been sent. Thank you!</div>
+                        </div>
+                        <div class="text-right form-submit-button"><button type="submit">Добавить игру</button></div>
+                    </form>
+                </div>
             </div>
-        </div>
+            <div class="row mt-3 pt-2">
+                <div class="col-lg-4 game-result-input text-lg-left">
+                    <h1>Внести Возврат Долгов</h1>
+                    <p class="mt-3">
+                        Расплатиться, отдать нажитые честным трудом, горбатиться на пацанов,
+                        лишить себя последней еды, планировать жить в коробке, копить на доширак,
+                        начать искать третью работу
+                    </p>
+                    <p class="mt-2 font-italic text-lg-right">
+                        — Keep calm and always pay your debts <br/>
+                        <span class="font-weight-bold">© Jason Statham</span>
+                    </p>
+                </div>
+                <div class="col-lg-8 mt-5 mt-lg-0">
+                    <div class="row aces-container">
+                        <img src="/static/assets/img/aces.jpg" class="img-fluid" alt="">
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <form id="debt-payment-form" role="form" class="php-email-form">
+                        <div class="form-row">
+                            {{ $players2 := .PlayersSource.Players}}
+                                <div class="debt-payment-row col-md-12 row">
+                                    <div class="col-md-5 form-group">
+                                        <select id="debt-payer" name="payer" class="custom-select payer-select form-control" data-msg="Кто отдаёт долги?">
+                                            <option selected>Отдал</option>
+                                            {{ range $i, $elem := $players2 }}
+                                                <option value="{{ .Id }}">{{ .Name }}</option>
+                                            {{ end }}
+                                        </select>
+                                        <div class="validate"></div>
+                                    </div>
+                                    <div class="col-md-5 form-group ">
+                                        <select id="debt-receiver" name="receiver" class="custom-select receiver-select form-control" data-msg="Кто получатель?">
+                                            <option selected>Получил</option>
+                                            {{ range $i, $elem := $players }}
+                                                <option value="{{ .Id }}">{{ .Name }}</option>
+                                            {{ end }}
+                                        </select>
+                                        <div class="validate"></div>
+                                    </div>
+                                    <div class="col-md-2 form-group amount-group">
+                                        <input id="debt-amount" type="number" pattern="\d*" name="amount" class="form-control" placeholder="Сумма" data-msg="Сколько денег?" autocomplete="off" />
+                                        <div class="validate"></div>
+                                    </div>
+                                </div>
+                            <div id="debt-payment-common-validation" class="validate text-center"></div>
+                        </div>
+                        <div class="text-right form-submit-button"><button id="pay-debt" class="btn-primary" onclick="onDebtPaymentSubmit(event)">Отдать долг</button></div>
+                    </form>
+                </div>
+            </div>
         </div>
     </section><!-- End Contact Section -->
 

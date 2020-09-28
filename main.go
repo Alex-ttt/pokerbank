@@ -118,6 +118,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", handlers.IndexPage)
+	http.HandleFunc("/payDebts", handlers.AddDebtPayment)
 	if err = http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal(err)
 	}

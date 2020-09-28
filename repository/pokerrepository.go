@@ -22,6 +22,12 @@ type PlayersDebtsViewModel struct {
 	Winners []Winner
 }
 
+type DebtPaymentInsertDto struct {
+	PayerId    int
+	ReceiverId int
+	Amount     int
+}
+
 type GameResultInsertDto struct {
 	GameName    string
 	GameDate    time.Time
@@ -222,6 +228,21 @@ func GetPlayersPayments(db *sql.DB) PaymentsViewModel {
 	return result
 }
 
+func AddDebtPayment(db *sql.DB, debtPayment *DebtPaymentInsertDto) error {
+	_, _err := db.Exec(
+		"select poker.insertdebtpayment($1, $2, $3)",
+		debtPayment.PayerId,
+		debtPayment.ReceiverId,
+		debtPayment.Amount)
+
+	if _err != nil {
+		log.Panic(_err)
+		return _err
+	}
+
+	return nil
+}
+
 func AddGameWithResults(db *sql.DB, gameResults *GameResultInsertDto) error {
 	_, _err := db.Exec(
 		"select poker.insertgameresult($1, $2::date, $3::poker.playergameresult[])",
@@ -302,11 +323,11 @@ func GetPlayersDebts(db *sql.DB) *PlayersDebtsViewModel {
 			Losers:  make([]string, 0, DefaultSliceCapacity),
 			Winners: make([]Winner, 0, DefaultSliceCapacity),
 		}
-		winner, loser                               string
-		pWin, commonWin, winnerId, previousWinnerId int
+		winner, loser                                         string
+		pWin, commonWin, winnerId, looserId, previousWinnerId int
 	)
 	for rows.Next() {
-		_ = rows.Scan(&winnerId, &winner, &loser, &pWin, &commonWin)
+		_ = rows.Scan(&winnerId, &winner, &looserId, &loser, &pWin, &commonWin)
 
 		if winnerId != previousWinnerId {
 			result.Winners = append(result.Winners, Winner{

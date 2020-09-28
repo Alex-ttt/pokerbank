@@ -1009,7 +1009,7 @@ section {
   padding: 10px 12px;
 }
 
-.contact .php-email-form button[type="submit"] {
+.form-submit-button button {
   background: #0563bb;
   border: 0;
   padding: 10px 35px;
@@ -1018,7 +1018,7 @@ section {
   border-radius: 50px;
 }
 
-.contact .php-email-form button[type="submit"]:hover {
+.form-submit-button button:hover {
   background: #0678e3;
 }
 
@@ -1160,4 +1160,12 @@ section {
 
 #footer .credits {
   font-size: 13px;
+}
+
+.aces-container img {
+  margin: 0 auto;
+}
+
+#debt-payment-common-validation {
+  margin: 0 auto;
 }

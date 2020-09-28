@@ -67,3 +67,11 @@
  .game-info-item {
      display: flex !important;
  }
+
+ .games-thread {
+     /* Заготовка для сокрытия длинной истории игр */
+     /*padding-top: 1em;*/
+     /*overflow: hidden;*/
+     /*text-overflow: ellipsis;*/
+     /*height: 150vh;*/
+ }
