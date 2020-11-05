@@ -1,0 +1,9 @@
+module github.com/Alex-ttt/pokerbank
+
+go 1.14
+
+require (
+	github.com/heroku/x v0.0.26
+	github.com/jackc/pgx/v4 v4.9.0
+	github.com/lib/pq v1.8.0
+)

@@ -1,4 +1,4 @@
-runtime: go113
+runtime: go114
 
 env_variables:
 
@@ -6,3 +6,6 @@ env_variables:
   DB_USER: postgres
   DB_PASS: admin
   DB_NAME: pokerdb
+
+manual_scaling:
+  instances: 1

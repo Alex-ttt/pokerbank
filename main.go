@@ -3,12 +3,14 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Alex-ttt/pokerbank/handlers"
+	"github.com/Alex-ttt/pokerbank/models"
+	_ "github.com/heroku/x/hmetrics/onload"
 	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
-	"pokerscore/handlers"
-	"pokerscore/models"
 )
 
 // initTCPConnectionPool initializes a TCP connection pool for a Cloud SQL
@@ -43,7 +45,7 @@ func initTCPConnectionPool() (*sql.DB, error) {
 // initSocketConnectionPool initializes a Unix socket connection pool for
 // a Cloud SQL instance of SQL Server.
 func initSocketConnectionPool() (*sql.DB, error) {
-	// [START cloud_sql_postgres_databasesql_create_socket]
+	// [START cloud_sql_postgres_databasesql_create_socket]s
 	var (
 		dbUser                 = mustGetenv("DB_USER")
 		dbPwd                  = mustGetenv("DB_PASS")
@@ -88,20 +90,32 @@ func main() {
 		err error
 	)
 
-	if os.Getenv("DB_TCP_HOST") != "" {
-		db, err = initTCPConnectionPool()
+	databaseUrl := os.Getenv("DATABASE_URL")
+	if len(databaseUrl) > 0 {
+		db, err = sql.Open("postgres", os.Getenv("DATABASE_URL"))
 		if err != nil {
-			log.Fatalf("initTCPConnectionPool: unable to connect: %s", err)
-		} else {
-			log.Println("initTCPConnectionPool: success")
+			log.Fatalf("Error opening database: %q", err)
 		}
 	} else {
-		db, err = initSocketConnectionPool()
-		if err != nil {
-			log.Fatalf("initSocketConnectionPool: unable to connect: %s", err)
+		if os.Getenv("DB_TCP_HOST") != "" {
+			db, err = initTCPConnectionPool()
+			if err != nil {
+				log.Fatalf("initTCPConnectionPool: unable to connect: %s", err)
+			} else {
+				log.Println("initTCPConnectionPool: success")
+			}
 		} else {
-			log.Println("initSocketConnectionPool: success")
+			db, err = initSocketConnectionPool()
+			if err != nil {
+				log.Fatalf("initSocketConnectionPool: unable to connect: %s", err)
+			} else {
+				log.Println("initSocketConnectionPool: success")
+			}
 		}
+	}
+
+	if db == nil {
+		log.Panic("Ooops")
 	}
 
 	models.Db = db

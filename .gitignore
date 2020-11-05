@@ -6,6 +6,7 @@
 *.dll
 *.so
 *.dylib
+.idea
 
 # Test binary, built with `go test -c`
 *.test
@@ -16,3 +17,16 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+.gcloudignore
+.idea/.name
+.idea/dataSources.xml
+.idea/dictionaries/
+.idea/inspectionProfiles/
+.idea/jsLibraryMappings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/pokerbank.iml
+.idea/sqldialects.xml
+.idea/vcs.xml
+.idea/webResources.xml
+go.sum

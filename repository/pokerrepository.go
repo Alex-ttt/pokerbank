@@ -142,6 +142,20 @@ func GetIndexPageViewModel(db *sql.DB) IndexPageViewModel {
 	}
 }
 
+//goland:noinspection GoUnusedExportedFunction
+func GetMockPageViewModel() IndexPageViewModel {
+	return IndexPageViewModel{
+		Games: GameInfoViewModel{Games: []Game{}},
+		Debts: PlayersDebtsViewModel{
+			Losers:  []string{},
+			Winners: []Winner{},
+		},
+		Payments:      PaymentsViewModel{Payments: []Payment{}},
+		Offsetting:    OffsettingViewModel{Offsets: []Offsetting{}},
+		PlayersSource: PlayersSourceViewModel{Players: []Player{}},
+	}
+}
+
 func GetPlayersSource(db *sql.DB) PlayersSourceViewModel {
 	rows, err := db.Query("select * from poker.playerslist();")
 	if err != nil {

@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/Alex-ttt/pokerbank/models"
+	"github.com/Alex-ttt/pokerbank/repository"
 	"html/template"
 	"net/http"
-	"pokerscore/models"
-	"pokerscore/repository"
 )
 
 func AddDebtPayment(writer http.ResponseWriter, request *http.Request) {
@@ -51,6 +51,7 @@ func IndexPage(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	indexViewModel := repository.GetIndexPageViewModel(models.Db)
+	//indexViewModel := repository.GetMockPageViewModel()
 	addFunc := template.FuncMap{"add": func(x, y int) int {
 		return x + y
 	}}
