@@ -3,6 +3,9 @@
 build:
   languages:
     - go
+  docker:
+    web: Dockerfile
+    worker: worker/Dockerfile
 
 run:
   web: pokerscore
