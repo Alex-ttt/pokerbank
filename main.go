@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"github.com/Alex-ttt/pokerbank/handlers"
 	"github.com/Alex-ttt/pokerbank/models"
+	"github.com/gin-gonic/gin"
 	_ "github.com/heroku/x/hmetrics/onload"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	_ "github.com/lib/pq"
+	"html/template"
 	"log"
-	"net/http"
 	"os"
 )
 
@@ -76,15 +77,6 @@ func initSocketConnectionPool() (*sql.DB, error) {
 }
 
 func main() {
-	//connectionSettings := models.DatabaseSettings{
-	//	Host:     "localhost",
-	//	Port:     5432,
-	//	User:     "postgres",
-	//	Password: "admin",
-	//	DbName:   "pokerdb",
-	//}
-	//models.InitDb(connectionSettings)
-
 	var (
 		db  *sql.DB
 		err error
@@ -114,16 +106,8 @@ func main() {
 		}
 	}
 
-	if db == nil {
-		log.Panic("Ooops")
-	}
-
 	models.Db = db
 	models.CreateDatabaseStructure(db)
-
-	http.Handle("/static/", //final url can be anything
-		http.StripPrefix("/static/",
-			http.FileServer(http.Dir("static"))))
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -131,9 +115,23 @@ func main() {
 		log.Printf("Defaulting to port %s", port)
 	}
 
-	http.HandleFunc("/", handlers.IndexPage)
-	http.HandleFunc("/payDebts", handlers.AddDebtPayment)
-	if err = http.ListenAndServe(":"+port, nil); err != nil {
+	var router = gin.Default()
+	router.Static("/static", "./static")
+	templateFuncs := template.FuncMap{
+		"add": func(x, y int) int { return x + y },
+		"seq": func(n int) []int { return make([]int, n, n) },
+	}
+
+	router.SetFuncMap(templateFuncs)
+	router.LoadHTMLFiles("templates/index.html")
+
+	router.GET("/", handlers.IndexPage)
+	router.POST("/addGameResult", handlers.AddGameResult)
+	router.POST("/payDebts", handlers.AddDebtPayment)
+	//http.HandleFunc("/", handlers.IndexPage)
+	//http.HandleFunc("/payDebts", handlers.AddDebtPayment)
+
+	if err = router.Run(":" + port); err != nil {
 		log.Fatal(err)
 	}
 }

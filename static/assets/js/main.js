@@ -26,7 +26,7 @@
 
   // Smooth scroll for the navigation menu and links with .scrollto classes
   $(document).on('click', '.nav-menu a, .scrollto', function(e) {
-    if (location.pathname.replace(/^\//, '') == this.pathname.replace(/^\//, '') && location.hostname == this.hostname) {
+    if (location.pathname.replace(/^\//, '') === this.pathname.replace(/^\//, '') && location.hostname === this.hostname) {
       var target = $(this.hash);
       if (target.length) {
         e.preventDefault();
@@ -65,7 +65,7 @@
     }
   });
 
-  $(document).on('click', '.mobile-nav-toggle', function(e) {
+  $(document).on('click', '.mobile-nav-toggle', function() {
     $('body').toggleClass('mobile-nav-active');
     $('.mobile-nav-toggle i').toggleClass('icofont-navigation-menu icofont-close');
   });
@@ -388,7 +388,7 @@ function addNewGameResult() {
 
     if (isValidationOk) {
       var formData = { gameName: gameName.val(), gameDate: gameDate.val(), gameResults: JSON.stringify(gameResults) }
-      addGameResult(this_form.attr('action'), JSON.stringify(formData), this_form);
+      addGameResult("/addGameResult", JSON.stringify(formData), this_form);
     }
   }
 

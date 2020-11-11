@@ -1,3 +1,4 @@
+{{ define "templates/index.html" }}
 <!DOCTYPE html>
 <!--suppress HtmlFormInputWithoutLabel -->
 <html lang="en">
@@ -325,7 +326,7 @@
                     <h1>Игры</h1>
                 </div>
                 <div class="col-lg-9 mt-5 mt-lg-0">
-                    <form id="game-result-form" action="/" method="POST" role="form" class="php-email-form" onsubmit="onNewGameResultSubmit(event)">
+                    <form id="game-result-form" method="POST" role="form" class="php-email-form" onsubmit="onNewGameResultSubmit(event)">
                         <div class="form-row">
                             <div class="col-md-12 form-group">
                                 <input type="text" name="name" class="form-control" id="name" placeholder="Название игры" data-msg="Давай нормальное описание - подлиньше" autocomplete="off" />
@@ -487,3 +488,4 @@
 </body>
 
 </html>
+{{ end }}
