@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Alex-ttt/pokerbank/handlers"
+	"github.com/Alex-ttt/pokerbank/middlewares"
 	"github.com/Alex-ttt/pokerbank/models"
+	"github.com/Alex-ttt/pokerbank/services"
 	"github.com/gin-gonic/gin"
 	_ "github.com/heroku/x/hmetrics/onload"
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -106,9 +108,10 @@ func main() {
 		}
 	}
 
-	models.Db = db
+	services.Db = db
 	models.CreateDatabaseStructure(db)
 
+	services.InitRedis()
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -125,9 +128,11 @@ func main() {
 	router.SetFuncMap(templateFuncs)
 	router.LoadHTMLFiles("templates/index.html")
 
-	router.GET("/", handlers.IndexPage)
-	router.POST("/addGameResult", handlers.AddGameResult)
-	router.POST("/payDebts", handlers.AddDebtPayment)
+	router.GET("/", middlewares.TokenAuthMiddleware, handlers.IndexPage)
+	router.POST("/addGameResult", middlewares.TokenAuthMiddleware, handlers.AddGameResult)
+	router.POST("/payDebts", middlewares.TokenAuthMiddleware, handlers.AddDebtPayment)
+	router.POST("/login", handlers.Login)
+	router.POST("/logout", middlewares.TokenAuthMiddleware, handlers.Logout)
 	//http.HandleFunc("/", handlers.IndexPage)
 	//http.HandleFunc("/payDebts", handlers.AddDebtPayment)
 

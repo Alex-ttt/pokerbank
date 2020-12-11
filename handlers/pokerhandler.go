@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/Alex-ttt/pokerbank/models"
 	"github.com/Alex-ttt/pokerbank/repository"
-	gin "github.com/gin-gonic/gin"
+	"github.com/Alex-ttt/pokerbank/services"
+	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 )
@@ -18,7 +18,7 @@ func AddDebtPayment(c *gin.Context) {
 		panic(err)
 	}
 
-	err = repository.AddDebtPayment(models.Db, &insertDto)
+	err = repository.AddDebtPayment(services.Db, &insertDto)
 	if err != nil {
 		panic(err)
 	}
@@ -38,7 +38,7 @@ func AddGameResult(c *gin.Context) {
 		return
 	}
 
-	if err = repository.AddGameWithResults(models.Db, &gameResult); err != nil {
+	if err = repository.AddGameWithResults(services.Db, &gameResult); err != nil {
 		log.Panic(http.StatusInternalServerError)
 		return
 	}
@@ -49,8 +49,7 @@ func AddGameResult(c *gin.Context) {
 }
 
 func IndexPage(c *gin.Context) {
-	indexViewModel := repository.GetIndexPageViewModel(models.Db)
-
+	indexViewModel := repository.GetIndexPageViewModel(services.Db)
 	//indexViewModel := repository.GetMockPageViewModel()
 	c.HTML(http.StatusOK, "templates/index.html", indexViewModel)
 
@@ -65,5 +64,18 @@ func IndexPage(c *gin.Context) {
 	//	http.Error(writer, err.Error(), http.StatusInternalServerError)
 	//	return
 	//}
+}
 
+type User struct {
+	ID       uint64 `json:"id"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Phone    string `json:"phone"`
+}
+
+var user = User{
+	ID:       1,
+	Username: "username",
+	Password: "password",
+	Phone:    "49123454322", //this is a random number
 }

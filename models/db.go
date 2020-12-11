@@ -6,16 +6,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var Db *sql.DB
-
-type DatabaseSettings struct {
-	Host     string
-	Port     int
-	User     string
-	Password string
-	DbName   string
-}
-
 func CreateDatabaseStructure(db *sql.DB) {
 	schemaRow := db.QueryRow(
 		`select exists(
