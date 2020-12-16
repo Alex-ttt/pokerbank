@@ -84,6 +84,9 @@ func main() {
 		err error
 	)
 
+	//os.Setenv("ACCESS_SECRET", "718B0C6ACDE6875BEF45396D9131D5B1978F549F84122B17CC8B9290CF97E970A8C6FBDBEF1E377EE66AD2D9BEDD1E4F053AF79C20836C68BE96FAA19B100146")
+	//os.Setenv("REFRESH_SECRET", "E9F1A0C19805D88E28430A3550DC56B32923A2160A9946B69504DE555F56C8D6912F173DBD08314C72A8D79EA41CB5466805D5284B37A6612579BF5D4A355876")
+
 	databaseUrl := os.Getenv("DATABASE_URL")
 	if len(databaseUrl) > 0 {
 		db, err = sql.Open("postgres", os.Getenv("DATABASE_URL"))
@@ -126,9 +129,11 @@ func main() {
 	}
 
 	router.SetFuncMap(templateFuncs)
-	router.LoadHTMLFiles("templates/index.html")
+	router.LoadHTMLGlob("templates/*")
 
-	router.GET("/", middlewares.TokenAuthMiddleware, handlers.IndexPage)
+	router.GET("/", middlewares.TokenAuthWithRedirectToLoginMiddleware, handlers.IndexPage)
+	router.GET("/login", middlewares.TokenAuthWithRedirectToIndexMiddleware, handlers.LoginPage)
+	router.POST("/signin", handlers.Login)
 	router.POST("/addGameResult", middlewares.TokenAuthMiddleware, handlers.AddGameResult)
 	router.POST("/payDebts", middlewares.TokenAuthMiddleware, handlers.AddDebtPayment)
 	router.POST("/login", handlers.Login)

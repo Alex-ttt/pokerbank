@@ -1,0 +1,51 @@
+{{ define "login.html" }}
+<!DOCTYPE html>
+<!--suppress HtmlFormInputWithoutLabel -->
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Войти</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link href="/static/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/assets/img/favicon.png" rel="icon">
+    <link href="/static/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+    <link href="/static/assets/vendor/boxicons/css/boxicons.min.css" rel="stylesheet">
+
+    <link href="/static/stylesheets/login.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <form method="POST" class="login-form" onsubmit="onSigningIn(event)">
+            <div class="login-body">
+                <div class="row">
+                    <h2 class="col-centered">Авторизация</h2>
+                </div>
+                <div class="my-4 row">
+                    <div class="col-md-4 col-centered form-group input-row">
+                        <i class="bx bxs-user inline-icon"></i>
+                        <input id="login" type="text" name="login" class="form-control" placeholder="Логин" />
+                    </div>
+                </div>
+                <div class="mb-4 row">
+                    <div class="col-md-4 col-centered form-group input-row">
+                        <i class="bx bxs-key inline-icon"></i>
+                        <input id="password" type="password" name="password" class="form-control" placeholder="Пароль" />
+                    </div>
+                </div>
+                <div class="text-center form-submit-button">
+                    <button id="login_button" type="submit" class="btn btn-primary">Войти</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="/static/assets/vendor/jquery/jquery.min.js"></script>
+
+    <script src="/static/assets/js/login.js"></script>
+</body>
+
+</html>
+{{ end }}

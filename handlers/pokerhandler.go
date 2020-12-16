@@ -51,7 +51,7 @@ func AddGameResult(c *gin.Context) {
 func IndexPage(c *gin.Context) {
 	indexViewModel := repository.GetIndexPageViewModel(services.Db)
 	//indexViewModel := repository.GetMockPageViewModel()
-	c.HTML(http.StatusOK, "templates/index.html", indexViewModel)
+	c.HTML(http.StatusOK, "index.html", indexViewModel)
 
 	//templates := template.Must(
 	//	template.
@@ -64,18 +64,4 @@ func IndexPage(c *gin.Context) {
 	//	http.Error(writer, err.Error(), http.StatusInternalServerError)
 	//	return
 	//}
-}
-
-type User struct {
-	ID       uint64 `json:"id"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Phone    string `json:"phone"`
-}
-
-var user = User{
-	ID:       1,
-	Username: "username",
-	Password: "password",
-	Phone:    "49123454322", //this is a random number
 }

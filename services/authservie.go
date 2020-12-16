@@ -5,7 +5,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/twinj/uuid"
-	"log"
 	"net/url"
 	"strings"
 
@@ -31,6 +30,8 @@ type accessDetails struct {
 
 const AccessTokenKey string = "access_token"
 const RefreshTokenKey string = "refresh_token"
+const AccessSecretKey string = "ACCESS_SECRET"
+const RefreshSecretKey string = "REFRESH_SECRET"
 
 func IsRequestAuthorized(request *http.Request) (bool, error) {
 	tokenAuth, err := ExtractTokenMetadata(request)
@@ -47,20 +48,15 @@ func IsRequestAuthorized(request *http.Request) (bool, error) {
 }
 
 func Refresh(c *gin.Context) (bool, error) {
-	mapToken := map[string]string{}
-	if err := c.ShouldBindJSON(&mapToken); err != nil {
-		return false, err
-	}
-	refreshToken := mapToken[RefreshTokenKey]
+	refreshToken := ExtractRefreshTokenFromCookie(c.Request)
 
 	//verify the token
-	os.Setenv("REFRESH_SECRET", "mcmvmkmsdnfsdmfdsjf") //this should be in an env file
 	token, err := jwt.Parse(refreshToken, func(token *jwt.Token) (interface{}, error) {
 		//Make sure that the token method conform to "SigningMethodHMAC"
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return false, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(os.Getenv("REFRESH_SECRET")), nil
+		return []byte(os.Getenv(RefreshSecretKey)), nil
 	})
 	//if there is an error, the token must have expired
 	if err != nil {
@@ -100,26 +96,30 @@ func Refresh(c *gin.Context) (bool, error) {
 			AccessTokenKey:  ts.AccessToken,
 			RefreshTokenKey: ts.RefreshToken,
 		}
-		c.JSON(http.StatusCreated, tokens)
 
-		http.SetCookie(c.Writer, &http.Cookie{
-			Name:     AccessTokenKey,
-			Value:    url.QueryEscape(ts.AccessToken),
-			HttpOnly: true,
-			Secure:   false,
-		})
-
-		http.SetCookie(c.Writer, &http.Cookie{
-			Name:     RefreshTokenKey,
-			Value:    url.QueryEscape(ts.RefreshToken),
-			HttpOnly: true,
-			Secure:   false,
-		})
+		SetTokensToResponseCookie(&c.Writer, &tokens)
 
 		return true, nil
 	} else {
 		return false, nil
 	}
+}
+
+func SetTokensToResponseCookie(writer *gin.ResponseWriter, tokens *map[string]string) {
+	http.SetCookie(*writer, &http.Cookie{
+		Name:     AccessTokenKey,
+		Value:    url.QueryEscape((*tokens)[AccessTokenKey]),
+		HttpOnly: true,
+		Secure:   false,
+		Expires:  time.Now().Add(time.Hour),
+	})
+	http.SetCookie(*writer, &http.Cookie{
+		Name:     RefreshTokenKey,
+		Value:    url.QueryEscape((*tokens)[RefreshTokenKey]),
+		HttpOnly: true,
+		Secure:   false,
+		Expires:  time.Now().AddDate(0, 6, 0),
+	})
 }
 
 func DeleteAuth(givenUuid string) (int64, error) {
@@ -142,18 +142,15 @@ func FetchAuth(authD *accessDetails) (uint64, error) {
 func extractTokensFromCookie(r *http.Request) map[string]string {
 	result := make(map[string]string, 2)
 	accessTokenCookie, err := r.Cookie(AccessTokenKey)
-	if err != nil {
-		log.Panic(err)
-		return result
-	}
-	refreshTokenCookie, err := r.Cookie(RefreshTokenKey)
-	if err != nil {
-		log.Panic(err)
-		return result
+	if err == nil {
+		result[AccessTokenKey] = accessTokenCookie.Value
 	}
 
-	result[AccessTokenKey] = accessTokenCookie.Value
-	result[RefreshTokenKey] = refreshTokenCookie.Value
+	refreshTokenCookie, err := r.Cookie(RefreshTokenKey)
+	if err == nil {
+		result[RefreshTokenKey] = refreshTokenCookie.Value
+	}
+
 	return result
 }
 
@@ -162,6 +159,12 @@ func ExtractAccessTokenFromCookie(r *http.Request) string {
 	return cookies[AccessTokenKey]
 }
 
+func ExtractRefreshTokenFromCookie(r *http.Request) string {
+	cookies := extractTokensFromCookie(r)
+	return cookies[RefreshTokenKey]
+}
+
+//goland:noinspection GoUnusedExportedFunction
 func ExtractTokenFromBearToken(r *http.Request) string {
 	bearToken := r.Header.Get("Authorization")
 	//normally Authorization the_token_xxx
@@ -179,7 +182,7 @@ func VerifyToken(r *http.Request) (*jwt.Token, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(os.Getenv("ACCESS_SECRET")), nil
+		return []byte(os.Getenv(AccessSecretKey)), nil
 	})
 	if err != nil {
 		return nil, err
@@ -187,6 +190,7 @@ func VerifyToken(r *http.Request) (*jwt.Token, error) {
 	return token, nil
 }
 
+//goland:noinspection GoUnusedExportedFunction
 func TokenValid(r *http.Request) error {
 	token, err := VerifyToken(r)
 	if err != nil {
@@ -247,25 +251,23 @@ func CreateToken(userid uint64) (*TokenDetails, error) {
 
 	var err error
 	//Creating Access Token
-	os.Setenv("ACCESS_SECRET", "jdnfksdmfksd") //this should be in an env file
 	atClaims := jwt.MapClaims{}
 	atClaims["authorized"] = true
 	atClaims["access_uuid"] = td.AccessUuid
 	atClaims["user_id"] = userid
 	atClaims["exp"] = td.AtExpires
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
-	td.AccessToken, err = at.SignedString([]byte(os.Getenv("ACCESS_SECRET")))
+	td.AccessToken, err = at.SignedString([]byte(os.Getenv(AccessSecretKey)))
 	if err != nil {
 		return nil, err
 	}
-	//Creating Refresh Token
-	os.Setenv("REFRESH_SECRET", "mcmvmkmsdnfsdmfdsjf") //this should be in an env file
+
 	rtClaims := jwt.MapClaims{}
 	rtClaims["refresh_uuid"] = td.RefreshUuid
 	rtClaims["user_id"] = userid
 	rtClaims["exp"] = td.RtExpires
 	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, rtClaims)
-	td.RefreshToken, err = rt.SignedString([]byte(os.Getenv("REFRESH_SECRET")))
+	td.RefreshToken, err = rt.SignedString([]byte(os.Getenv(RefreshSecretKey)))
 	if err != nil {
 		return nil, err
 	}
