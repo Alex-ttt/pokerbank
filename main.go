@@ -133,7 +133,6 @@ func main() {
 
 	router.GET("/", middlewares.TokenAuthWithRedirectToLoginMiddleware, handlers.IndexPage)
 	router.GET("/login", middlewares.TokenAuthWithRedirectToIndexMiddleware, handlers.LoginPage)
-	router.POST("/signin", handlers.Login)
 	router.POST("/addGameResult", middlewares.TokenAuthMiddleware, handlers.AddGameResult)
 	router.POST("/payDebts", middlewares.TokenAuthMiddleware, handlers.AddDebtPayment)
 	router.POST("/login", handlers.Login)

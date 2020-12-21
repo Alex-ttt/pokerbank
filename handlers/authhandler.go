@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/Alex-ttt/pokerbank/repository"
 	"github.com/Alex-ttt/pokerbank/services"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -11,22 +12,45 @@ func LoginPage(context *gin.Context) {
 }
 
 func Login(c *gin.Context) {
-	var user UserLoginDto
-	if err := c.ShouldBindJSON(&user); err != nil {
+	var userCredentials CredentialsDto
+	if err := c.ShouldBindJSON(&userCredentials); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, "Invalid json provided")
 		return
 	}
-	//compare the user from the request, with the one we defined:
-	//if user.Username != u.Username || user.Password != u.Password {
-	//	c.JSON(http.StatusUnauthorized, "Please provide valid login details")
-	//	return
-	//}
-	tokenDetails, err := services.CreateToken(1)
+
+	if doesLoginExist := repository.CheckLoginExists(services.Db, userCredentials.Login); !doesLoginExist {
+		c.JSON(http.StatusUnauthorized, "Please provide valid login details")
+		return
+	}
+
+	savedPassword := repository.GetPassword(services.Db, userCredentials.Login)
+	if len(savedPassword) == 0 {
+		// Register password for user
+		if len(userCredentials.Password) < 5 {
+			c.JSON(http.StatusBadRequest, "Short password is not required")
+			return
+		}
+
+		newPassword, err := services.EncryptPassword(userCredentials.Password)
+		if err != nil {
+			c.JSON(http.StatusUnprocessableEntity, err.Error())
+			return
+		}
+
+		repository.SetPassword(services.Db, userCredentials.Login, string(newPassword))
+	} else {
+		if !services.IsPasswordsEqual(savedPassword, userCredentials.Password) {
+			c.JSON(http.StatusUnauthorized, "Please provide valid login details")
+			return
+		}
+	}
+
+	tokenDetails, err := services.CreateToken(userCredentials.Login)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, err.Error())
 		return
 	}
-	saveErr := services.CreateAuth(1, tokenDetails)
+	saveErr := services.CreateAuth(userCredentials.Login, tokenDetails)
 	if saveErr != nil {
 		c.JSON(http.StatusUnprocessableEntity, saveErr.Error())
 	}
@@ -54,7 +78,7 @@ func Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, "Successfully logged out")
 }
 
-type UserLoginDto struct {
+type CredentialsDto struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
 }

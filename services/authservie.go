@@ -5,12 +5,12 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/twinj/uuid"
+	"golang.org/x/crypto/bcrypt"
 	"net/url"
 	"strings"
 
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -25,7 +25,7 @@ type TokenDetails struct {
 
 type accessDetails struct {
 	AccessUuid string
-	UserId     uint64
+	UserLogin  string
 }
 
 const AccessTokenKey string = "access_token"
@@ -73,22 +73,19 @@ func Refresh(c *gin.Context) (bool, error) {
 		if !ok {
 			return false, err
 		}
-		userId, err := strconv.ParseUint(fmt.Sprintf("%.f", claims["user_id"]), 10, 64)
-		if err != nil {
-			return false, err
-		}
+		userLogin := claims["user_login"].(string)
 		//Delete the previous Refresh Token
 		deleted, delErr := DeleteAuth(refreshUuid)
 		if delErr != nil || deleted == 0 { //if any goes wrong
 			return false, err
 		}
 		//Create new pairs of refresh and access tokens
-		ts, createErr := CreateToken(userId)
+		ts, createErr := CreateToken(userLogin)
 		if createErr != nil {
 			return false, err
 		}
 		//save the tokens metadata to redis
-		saveErr := CreateAuth(userId, ts)
+		saveErr := CreateAuth(userLogin, ts)
 		if saveErr != nil {
 			return false, err
 		}
@@ -111,14 +108,14 @@ func SetTokensToResponseCookie(writer *gin.ResponseWriter, tokens *map[string]st
 		Value:    url.QueryEscape((*tokens)[AccessTokenKey]),
 		HttpOnly: true,
 		Secure:   false,
-		Expires:  time.Now().Add(time.Hour),
+		Expires:  time.Now().Add(time.Minute * 15),
 	})
 	http.SetCookie(*writer, &http.Cookie{
 		Name:     RefreshTokenKey,
 		Value:    url.QueryEscape((*tokens)[RefreshTokenKey]),
 		HttpOnly: true,
 		Secure:   false,
-		Expires:  time.Now().AddDate(0, 6, 0),
+		Expires:  time.Now().AddDate(0, 0, 90),
 	})
 }
 
@@ -130,13 +127,13 @@ func DeleteAuth(givenUuid string) (int64, error) {
 	return deleted, nil
 }
 
-func FetchAuth(authD *accessDetails) (uint64, error) {
-	userid, err := RedisClient.Get(authD.AccessUuid).Result()
+func FetchAuth(authD *accessDetails) (string, error) {
+	userLogin, err := RedisClient.Get(authD.AccessUuid).Result()
 	if err != nil {
-		return 0, err
+		return "", err
 	}
-	userID, _ := strconv.ParseUint(userid, 10, 64)
-	return userID, nil
+
+	return userLogin, nil
 }
 
 func extractTokensFromCookie(r *http.Request) map[string]string {
@@ -213,40 +210,39 @@ func ExtractTokenMetadata(r *http.Request) (*accessDetails, error) {
 		if !ok {
 			return nil, err
 		}
-		userId, err := strconv.ParseUint(fmt.Sprintf("%.f", claims["user_id"]), 10, 64)
-		if err != nil {
-			return nil, err
-		}
+
+		userLogin := claims["user_login"].(string)
+
 		return &accessDetails{
 			AccessUuid: accessUuid,
-			UserId:     userId,
+			UserLogin:  userLogin,
 		}, nil
 	}
 	return nil, err
 }
 
-func CreateAuth(userid uint64, td *TokenDetails) error {
+func CreateAuth(userLogin string, td *TokenDetails) error {
 	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
 	rt := time.Unix(td.RtExpires, 0)
 	now := time.Now()
 
-	errAccess := RedisClient.Set(td.AccessUuid, strconv.Itoa(int(userid)), at.Sub(now)).Err()
+	errAccess := RedisClient.Set(td.AccessUuid, userLogin, at.Sub(now)).Err()
 	if errAccess != nil {
 		return errAccess
 	}
-	errRefresh := RedisClient.Set(td.RefreshUuid, strconv.Itoa(int(userid)), rt.Sub(now)).Err()
+	errRefresh := RedisClient.Set(td.RefreshUuid, userLogin, rt.Sub(now)).Err()
 	if errRefresh != nil {
 		return errRefresh
 	}
 	return nil
 }
 
-func CreateToken(userid uint64) (*TokenDetails, error) {
+func CreateToken(userLogin string) (*TokenDetails, error) {
 	td := &TokenDetails{}
 	td.AtExpires = time.Now().Add(time.Minute * 15).Unix()
 	td.AccessUuid = uuid.NewV4().String()
 
-	td.RtExpires = time.Now().Add(time.Hour * 24 * 7).Unix()
+	td.RtExpires = time.Now().Add(time.Hour * 24 * 90).Unix()
 	td.RefreshUuid = uuid.NewV4().String()
 
 	var err error
@@ -254,7 +250,7 @@ func CreateToken(userid uint64) (*TokenDetails, error) {
 	atClaims := jwt.MapClaims{}
 	atClaims["authorized"] = true
 	atClaims["access_uuid"] = td.AccessUuid
-	atClaims["user_id"] = userid
+	atClaims["user_login"] = userLogin
 	atClaims["exp"] = td.AtExpires
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
 	td.AccessToken, err = at.SignedString([]byte(os.Getenv(AccessSecretKey)))
@@ -264,7 +260,7 @@ func CreateToken(userid uint64) (*TokenDetails, error) {
 
 	rtClaims := jwt.MapClaims{}
 	rtClaims["refresh_uuid"] = td.RefreshUuid
-	rtClaims["user_id"] = userid
+	rtClaims["user_login"] = userLogin
 	rtClaims["exp"] = td.RtExpires
 	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, rtClaims)
 	td.RefreshToken, err = rt.SignedString([]byte(os.Getenv(RefreshSecretKey)))
@@ -272,4 +268,18 @@ func CreateToken(userid uint64) (*TokenDetails, error) {
 		return nil, err
 	}
 	return td, nil
+}
+
+func EncryptPassword(password string) ([]byte, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 8)
+	if err != nil {
+		return nil, err
+	}
+
+	return hashedPassword, nil
+}
+
+func IsPasswordsEqual(hashedPassword string, password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	return err == nil
 }

@@ -49,8 +49,10 @@ func AddGameResult(c *gin.Context) {
 }
 
 func IndexPage(c *gin.Context) {
+
 	indexViewModel := repository.GetIndexPageViewModel(services.Db)
 	//indexViewModel := repository.GetMockPageViewModel()
+
 	c.HTML(http.StatusOK, "index.html", indexViewModel)
 
 	//templates := template.Must(

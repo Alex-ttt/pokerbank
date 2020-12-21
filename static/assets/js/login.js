@@ -12,7 +12,7 @@ function onSigningIn(event) {
 
     $.ajax({
         type: "POST",
-        url: "/signin",
+        url: "/login",
         data: data,
         contentType: "application/x-www-form-urlencoded; charset = UTF-8",
         success: function(){
