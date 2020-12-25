@@ -397,6 +397,32 @@ function addNewGameResult() {
     element.css('opacity', '0.5');
   }
 
+  function logout() {
+    $.ajax({
+      type: "POST",
+      url: "logout",
+      success: function(data, textStatus ){
+        console.log("success data");
+        console.log(textStatus);
+        if (textStatus === 'success') {
+        } else {
+          console.log(textStatus)
+        }
+      },
+      done: function(data) {
+        console.log('done data')
+        console.log(data)
+        location.reload();
+      },
+      error:function (data, a, b, c, d) {
+        console.log(data);
+        console.log(a);
+        console.log(b);
+        console.log(c);
+        console.log(d);
+      }
+    });
+  }
 
   function addGameResult(action, data, this_form) {
     var submitButton = $('#game-result-form button[type=submit]');

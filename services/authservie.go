@@ -24,8 +24,8 @@ type TokenDetails struct {
 }
 
 type accessDetails struct {
-	AccessUuid string
-	UserLogin  string
+	Uuid      string
+	UserLogin string
 }
 
 const AccessTokenKey string = "access_token"
@@ -34,7 +34,7 @@ const AccessSecretKey string = "ACCESS_SECRET"
 const RefreshSecretKey string = "REFRESH_SECRET"
 
 func IsRequestAuthorized(request *http.Request) (bool, error) {
-	tokenAuth, err := ExtractTokenMetadata(request)
+	tokenAuth, err := ExtractTokenMetadata(request, true)
 	if err != nil {
 		return false, err
 	}
@@ -67,15 +67,23 @@ func Refresh(c *gin.Context) (bool, error) {
 		return false, err
 	}
 	//Since token is valid, get the uuid:
-	claims, ok := token.Claims.(jwt.MapClaims) //the token claims should conform to MapClaims
+	claims, ok := token.Claims.(jwt.MapClaims)
+
 	if ok && token.Valid {
 		refreshUuid, ok := claims["refresh_uuid"].(string) //convert the interface to string
 		if !ok {
 			return false, err
 		}
 		userLogin := claims["user_login"].(string)
+
+		storedTokenValue, redisErr := GetFromRedis(RedisClient, claims["refresh_uuid"].(string))
+		if redisErr != nil || storedTokenValue != userLogin {
+			return false, err
+		}
+
 		//Delete the previous Refresh Token
 		deleted, delErr := DeleteAuth(refreshUuid)
+
 		if delErr != nil || deleted == 0 { //if any goes wrong
 			return false, err
 		}
@@ -84,7 +92,7 @@ func Refresh(c *gin.Context) (bool, error) {
 		if createErr != nil {
 			return false, err
 		}
-		//save the tokens metadata to redis
+
 		saveErr := CreateAuth(userLogin, ts)
 		if saveErr != nil {
 			return false, err
@@ -120,16 +128,16 @@ func SetTokensToResponseCookie(writer *gin.ResponseWriter, tokens *map[string]st
 }
 
 func DeleteAuth(givenUuid string) (int64, error) {
-	deleted, err := RedisClient.Del(givenUuid).Result()
+	err := DeleteFromRedis(RedisClient, givenUuid)
 	if err != nil {
 		return 0, err
 	}
-	return deleted, nil
+	return 1, nil
 }
 
 func FetchAuth(authD *accessDetails) (string, error) {
-	userLogin, err := RedisClient.Get(authD.AccessUuid).Result()
-	if err != nil {
+	userLogin, err := GetFromRedis(RedisClient, authD.Uuid)
+	if err != nil || len(userLogin) == 0 {
 		return "", err
 	}
 
@@ -172,14 +180,26 @@ func ExtractTokenFromBearToken(r *http.Request) string {
 	return ""
 }
 
-func VerifyToken(r *http.Request) (*jwt.Token, error) {
-	tokenString := ExtractAccessTokenFromCookie(r)
+func VerifyToken(r *http.Request, isAccessToken bool) (*jwt.Token, error) {
+	var tokenString string
+	if isAccessToken {
+		tokenString = ExtractAccessTokenFromCookie(r)
+	} else {
+		tokenString = ExtractRefreshTokenFromCookie(r)
+	}
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		//Make sure that the token method conform to "SigningMethodHMAC"
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(os.Getenv(AccessSecretKey)), nil
+
+		var secretKey string
+		if isAccessToken {
+			secretKey = os.Getenv(AccessSecretKey)
+		} else {
+			secretKey = os.Getenv(RefreshSecretKey)
+		}
+		return []byte(secretKey), nil
 	})
 	if err != nil {
 		return nil, err
@@ -188,8 +208,8 @@ func VerifyToken(r *http.Request) (*jwt.Token, error) {
 }
 
 //goland:noinspection GoUnusedExportedFunction
-func TokenValid(r *http.Request) error {
-	token, err := VerifyToken(r)
+func TokenValid(r *http.Request, isAccessToken bool) error {
+	token, err := VerifyToken(r, isAccessToken)
 	if err != nil {
 		return err
 	}
@@ -199,14 +219,19 @@ func TokenValid(r *http.Request) error {
 	return nil
 }
 
-func ExtractTokenMetadata(r *http.Request) (*accessDetails, error) {
-	token, err := VerifyToken(r)
+func ExtractTokenMetadata(r *http.Request, isAccessToken bool) (*accessDetails, error) {
+	token, err := VerifyToken(r, isAccessToken)
 	if err != nil {
 		return nil, err
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
+	var tokenUuid string
 	if ok && token.Valid {
-		accessUuid, ok := claims["access_uuid"].(string)
+		if isAccessToken {
+			tokenUuid, ok = claims["access_uuid"].(string)
+		} else {
+			tokenUuid, ok = claims["refresh_uuid"].(string)
+		}
 		if !ok {
 			return nil, err
 		}
@@ -214,23 +239,24 @@ func ExtractTokenMetadata(r *http.Request) (*accessDetails, error) {
 		userLogin := claims["user_login"].(string)
 
 		return &accessDetails{
-			AccessUuid: accessUuid,
-			UserLogin:  userLogin,
+			Uuid:      tokenUuid,
+			UserLogin: userLogin,
 		}, nil
 	}
 	return nil, err
 }
 
 func CreateAuth(userLogin string, td *TokenDetails) error {
-	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
+	at := time.Unix(td.AtExpires, 0)
 	rt := time.Unix(td.RtExpires, 0)
 	now := time.Now()
 
-	errAccess := RedisClient.Set(td.AccessUuid, userLogin, at.Sub(now)).Err()
+	errAccess := SetRedisKeyWithExpiration(RedisClient, td.AccessUuid, userLogin, at.Sub(now))
+	//Set(td.AccessUuid, userLogin, at.Sub(now)).Err()
 	if errAccess != nil {
 		return errAccess
 	}
-	errRefresh := RedisClient.Set(td.RefreshUuid, userLogin, rt.Sub(now)).Err()
+	errRefresh := SetRedisKeyWithExpiration(RedisClient, td.RefreshUuid, userLogin, rt.Sub(now))
 	if errRefresh != nil {
 		return errRefresh
 	}
@@ -238,36 +264,36 @@ func CreateAuth(userLogin string, td *TokenDetails) error {
 }
 
 func CreateToken(userLogin string) (*TokenDetails, error) {
-	td := &TokenDetails{}
-	td.AtExpires = time.Now().Add(time.Minute * 15).Unix()
-	td.AccessUuid = uuid.NewV4().String()
+	tokenDetails := &TokenDetails{}
+	tokenDetails.AtExpires = time.Now().Add(time.Minute * 15).Unix()
+	tokenDetails.AccessUuid = uuid.NewV4().String()
 
-	td.RtExpires = time.Now().Add(time.Hour * 24 * 90).Unix()
-	td.RefreshUuid = uuid.NewV4().String()
+	tokenDetails.RtExpires = time.Now().Add(time.Hour * 24 * 90).Unix()
+	tokenDetails.RefreshUuid = uuid.NewV4().String()
 
 	var err error
 	//Creating Access Token
 	atClaims := jwt.MapClaims{}
 	atClaims["authorized"] = true
-	atClaims["access_uuid"] = td.AccessUuid
+	atClaims["access_uuid"] = tokenDetails.AccessUuid
 	atClaims["user_login"] = userLogin
-	atClaims["exp"] = td.AtExpires
+	atClaims["exp"] = tokenDetails.AtExpires
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
-	td.AccessToken, err = at.SignedString([]byte(os.Getenv(AccessSecretKey)))
+	tokenDetails.AccessToken, err = at.SignedString([]byte(os.Getenv(AccessSecretKey)))
 	if err != nil {
 		return nil, err
 	}
 
 	rtClaims := jwt.MapClaims{}
-	rtClaims["refresh_uuid"] = td.RefreshUuid
+	rtClaims["refresh_uuid"] = tokenDetails.RefreshUuid
 	rtClaims["user_login"] = userLogin
-	rtClaims["exp"] = td.RtExpires
+	rtClaims["exp"] = tokenDetails.RtExpires
 	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, rtClaims)
-	td.RefreshToken, err = rt.SignedString([]byte(os.Getenv(RefreshSecretKey)))
+	tokenDetails.RefreshToken, err = rt.SignedString([]byte(os.Getenv(RefreshSecretKey)))
 	if err != nil {
 		return nil, err
 	}
-	return td, nil
+	return tokenDetails, nil
 }
 
 func EncryptPassword(password string) ([]byte, error) {

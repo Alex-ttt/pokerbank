@@ -65,17 +65,28 @@ func Login(c *gin.Context) {
 }
 
 func Logout(c *gin.Context) {
-	au, err := services.ExtractTokenMetadata(c.Request)
+	accessTokenUid, err := services.ExtractTokenMetadata(c.Request, true)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	deleted, delErr := services.DeleteAuth(au.AccessUuid)
-	if delErr != nil || deleted == 0 { //if any goes wrong
+
+	refreshTokenUid, err := services.ExtractTokenMetadata(c.Request, false)
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	c.JSON(http.StatusOK, "Successfully logged out")
+	deleted, delErr := services.DeleteAuth(accessTokenUid.Uuid)
+	if delErr != nil || deleted == 0 {
+		c.JSON(http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	deleted, delErr = services.DeleteAuth(refreshTokenUid.Uuid)
+	if delErr != nil || deleted == 0 {
+		c.JSON(http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	c.Redirect(http.StatusSeeOther, repository.LoginRoute)
 }
 
 type CredentialsDto struct {

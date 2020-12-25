@@ -6,6 +6,7 @@ import (
 	"github.com/Alex-ttt/pokerbank/handlers"
 	"github.com/Alex-ttt/pokerbank/middlewares"
 	"github.com/Alex-ttt/pokerbank/models"
+	"github.com/Alex-ttt/pokerbank/repository"
 	"github.com/Alex-ttt/pokerbank/services"
 	"github.com/gin-gonic/gin"
 	_ "github.com/heroku/x/hmetrics/onload"
@@ -84,9 +85,6 @@ func main() {
 		err error
 	)
 
-	//os.Setenv("ACCESS_SECRET", "718B0C6ACDE6875BEF45396D9131D5B1978F549F84122B17CC8B9290CF97E970A8C6FBDBEF1E377EE66AD2D9BEDD1E4F053AF79C20836C68BE96FAA19B100146")
-	//os.Setenv("REFRESH_SECRET", "E9F1A0C19805D88E28430A3550DC56B32923A2160A9946B69504DE555F56C8D6912F173DBD08314C72A8D79EA41CB5466805D5284B37A6612579BF5D4A355876")
-
 	databaseUrl := os.Getenv("DATABASE_URL")
 	if len(databaseUrl) > 0 {
 		db, err = sql.Open("postgres", os.Getenv("DATABASE_URL"))
@@ -115,6 +113,7 @@ func main() {
 	models.CreateDatabaseStructure(db)
 
 	services.InitRedis()
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -131,12 +130,12 @@ func main() {
 	router.SetFuncMap(templateFuncs)
 	router.LoadHTMLGlob("templates/*")
 
-	router.GET("/", middlewares.TokenAuthWithRedirectToLoginMiddleware, handlers.IndexPage)
-	router.GET("/login", middlewares.TokenAuthWithRedirectToIndexMiddleware, handlers.LoginPage)
-	router.POST("/addGameResult", middlewares.TokenAuthMiddleware, handlers.AddGameResult)
-	router.POST("/payDebts", middlewares.TokenAuthMiddleware, handlers.AddDebtPayment)
-	router.POST("/login", handlers.Login)
-	router.POST("/logout", middlewares.TokenAuthMiddleware, handlers.Logout)
+	router.GET(repository.IndexRoute, middlewares.TokenAuthWithRedirectToLoginMiddleware, handlers.IndexPage)
+	router.GET(repository.LoginRoute, middlewares.TokenAuthWithRedirectToIndexMiddleware, handlers.LoginPage)
+	router.POST(repository.LoginRoute, handlers.Login)
+	router.POST(repository.LogoutRout, middlewares.TokenAuthMiddleware, handlers.Logout)
+	router.POST(repository.AddGameResultRout, middlewares.TokenAuthMiddleware, handlers.AddGameResult)
+	router.POST(repository.PayDebtsRout, middlewares.TokenAuthMiddleware, handlers.AddDebtPayment)
 	//http.HandleFunc("/", handlers.IndexPage)
 	//http.HandleFunc("/payDebts", handlers.AddDebtPayment)
 
