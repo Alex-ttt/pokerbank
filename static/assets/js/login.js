@@ -39,12 +39,14 @@ function onSigningIn(event) {
             this_form.find('.loading').slideUp();
             this_form.find('.error-message').slideDown().html(error_msg);
         },
-        error:function (data, a, b, c, d) {
-            console.log(data);
-            console.log(a);
-            console.log(b);
-            console.log(c);
-            console.log(d);
+        error:function (data) {
+            if (data.status === 401) {
+                loginButton.prop('disabled', false);
+                loginButton.css('opacity', '1');
+                var validationMessageBlock = $('#validation-message');
+                validationMessageBlock.slideDown();
+                setTimeout(function(){validationMessageBlock.toggle('blind')}, 10);
+            }
         }
     });
 }

@@ -408,6 +408,7 @@ function addNewGameResult() {
         } else {
           console.log(textStatus)
         }
+        location.assign('/login')
       },
       done: function(data) {
         console.log('done data')

@@ -29,13 +29,18 @@
                         <input id="login" type="text" name="login" class="form-control" placeholder="Логин" />
                     </div>
                 </div>
-                <div class="mb-4 row">
+                <div class="mb-0 row">
                     <div class="col-md-4 col-centered form-group input-row">
                         <i class="bx bxs-key inline-icon"></i>
                         <input id="password" type="password" name="password" class="form-control" placeholder="Пароль" />
                     </div>
                 </div>
-                <div class="text-center form-submit-button">
+                <div id="validation-message" class="mb-0 row validate">
+                    <div class="col-md-4 col-centered form-group my-0 py-0">
+                        <span class="text-center">Неверный логин или пароль</span>
+                    </div>
+                </div>
+                <div class="text-center form-submit-button mt-4">
                     <button id="login_button" type="submit" class="btn btn-primary">Войти</button>
                 </div>
             </div>
