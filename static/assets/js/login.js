@@ -50,3 +50,13 @@ function onSigningIn(event) {
         }
     });
 }
+
+function onLoginKeyDown(e) {
+    if (e.which === 32)
+        return false;
+}
+
+function onLoginChange() {
+    var loginInput = $("input#login");
+    loginInput.val(loginInput.val().replace(/\s/g, ""));
+}

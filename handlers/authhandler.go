@@ -5,6 +5,7 @@ import (
 	"github.com/Alex-ttt/pokerbank/services"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
 )
 
 func LoginPage(context *gin.Context) {
@@ -18,6 +19,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	userCredentials.Login = strings.ToLower(strings.TrimSpace(userCredentials.Login))
 	if doesLoginExist := repository.CheckLoginExists(services.Db, userCredentials.Login); !doesLoginExist {
 		c.JSON(http.StatusUnauthorized, "Please provide valid login details")
 		return
